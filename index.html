@@ -167,6 +167,7 @@
         .status-badge-paid { color: #27ae60; font-size: 11px; padding: 2px 6px; border: 1px solid #27ae60; border-radius: 4px;}
         .status-badge-debt { color: #e74c3c; font-size: 11px; padding: 2px 6px; border: 1px solid #e74c3c; border-radius: 4px;}
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -252,24 +253,38 @@
 
     <script>
         let members = [];
-        let currentActiveMemberId = null;
+	let currentActiveMemberId = null;
 
-        function loadData() {
-            const savedData = localStorage.getItem('patoghSystemData');
-            if (savedData) {
-                members = JSON.parse(savedData);
-                members.forEach(m => { 
-                    if(!m.visits) m.visits = []; 
-                    if(!m.tier) m.tier = 'normal'; 
-                    m.visits.forEach(v => {
-                        if(v.game && !v.games) { v.games = [v.game]; }
-                        if(v.cost === undefined) { v.cost = 0; }
-                        if(!v.paymentStatus) { v.paymentStatus = 'paid'; }
-                    });
-                });
-            } else { members = []; }
-        }
+	const SUPABASE_URL = 'https://orhbwpuqcjwnietnepvh.supabase.co';
+	const SUPABASE_KEY = 'sb_publishable_rPylZEcBDLXPJFC30xJ_5g_82nbL0WZ';
 
+	const supabaseClient = supabase.createClient(
+    	    SUPABASE_URL,
+    	    SUPABASE_KEY
+	);
+
+	async function loadData() {
+   	    const { data, error } = await supabaseClient
+        	.from('members')
+        	.select('*')
+        	.order('created_at', { ascending: false });
+
+    	    if (error) {
+       		console.error('خطا در دریافت اعضا:', error);
+        	alert('خطا در اتصال به دیتابیس اعضا.');
+        			members = [];
+        	return;
+    	    }
+
+    	    members = data.map(member => ({
+        	id: member.id,
+        	name: member.name,
+        	tier: member.tier || 'normal',
+        	visits: []
+    	    }));
+	}
+
+ 
         function saveData() { localStorage.setItem('patoghSystemData', JSON.stringify(members)); }
 
         function renderList(filterWord = "") {
@@ -296,8 +311,8 @@
                                 ${debtLabel}
                             </div>
                             <div class="btn-group">
-                                <button class="btn-action btn-open" onclick="openModal(${member.id})">📝 پرونده</button>
-                                <button class="btn-action btn-remove" onclick="removeMember(${member.id})">حذف فرد</button>
+                                <button class="btn-action btn-open" onclick="openModal('${member.id}')">📝 پرونده</button>
+				<button class="btn-action btn-remove" onclick="removeMember('${member.id}')">حذف فرد</button>
                             </div>
                         </div>
                     `;
@@ -307,20 +322,58 @@
 
         function filterMembers() { renderList(document.getElementById('searchInput').value); }
 
-        function addMember() {
-            const nameEl = document.getElementById('newName');
-            const newName = nameEl.value.trim();
-            if (!newName) return alert("لطفاً نام را وارد نمایید.");
-            members.unshift({ id: Date.now(), name: newName, tier: document.getElementById('newTier').value, visits: [] });
-            saveData(); filterMembers(); nameEl.value = "";
-        }
+        async function addMember() {
+    		const nameEl = document.getElementById('newName');
+    		const newName = nameEl.value.trim();
+    		const newTier = document.getElementById('newTier').value;
 
-        function removeMember(id) {
-            if (confirm("آیا از حذف این شخص و تمام سوابق او اطمینان دارید؟")) {
-                members = members.filter(m => m.id !== id);
-                saveData(); filterMembers();
-            }
-        }
+    		if (!newName) {
+        		return alert("لطفاً نام را وارد نمایید.");
+    				}
+
+    		const { data, error } = await supabaseClient
+        		.from('members')
+        		.insert({
+            			name: newName,
+            			tier: newTier
+        		})
+        		.select()
+        		.single();
+
+    		if (error) {
+        		console.error('خطا در ثبت عضو:', error);
+        		return alert('ثبت عضو در دیتابیس انجام نشد.');
+    				}
+
+    		members.unshift({
+        		id: data.id,
+        		name: data.name,
+       			tier: data.tier,
+       			visits: []
+		});
+
+    		filterMembers();
+    		nameEl.value = "";
+	}
+
+        async function removeMember(id) {
+    		if (confirm("آیا از حذف این شخص و تمام سوابق او اطمینان دارید؟")) {
+
+        		const { error } = await supabaseClient
+            			.from('members')
+            			.delete()
+            			.eq('id', id);
+
+        		if (error) {
+            			console.error('خطا در حذف عضو:', error);
+            			return alert('حذف عضو انجام نشد.');
+        					}
+
+        		members = members.filter(m => m.id !== id);
+
+        		filterMembers();
+    		}
+	}
 
         function openModal(id) {
             currentActiveMemberId = id;
@@ -341,13 +394,30 @@
             }
         }
 
-        function updateMemberTier(newTier) {
-            const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
-            if(memberIndex > -1) {
-                members[memberIndex].tier = newTier;
-                saveData(); renderVisitsAndStats(); 
-            }
-        }
+        async function updateMemberTier(newTier) {
+    		const memberIndex = members.findIndex(
+        		m => m.id === currentActiveMemberId
+    		);
+
+    		if (memberIndex === -1) return;
+
+    		const { error } = await supabaseClient
+        		.from('members')
+        		.update({
+            			tier: newTier
+        		})
+        		.eq('id', currentActiveMemberId);
+
+    		if (error) {
+        		console.error('خطا در تغییر سطح عضو:', error);
+        		return alert('تغییر سطح کاربر ذخیره نشد.');
+    				}
+
+    		members[memberIndex].tier = newTier;
+
+    		renderVisitsAndStats();
+    		filterMembers();
+	}
 
         function registerEntry() {
             const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
@@ -703,7 +773,12 @@
             });
         }
 
-        loadData(); renderList();
+        async function initApp() {
+    		await loadData();
+    		renderList();
+	}
+
+initApp();
     </script>
 </body>
 </html>
