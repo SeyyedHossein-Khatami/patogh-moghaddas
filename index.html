@@ -523,44 +523,108 @@
             container.appendChild(input);
         }
 
-        function completeCheckout(visitId) {
-            const entryInput = document.getElementById(`entry_edit_${visitId}`).value;
-            const exitInput = document.getElementById(`exit_${visitId}`).value;
-            const paymentInput = document.getElementById(`payment_${visitId}`).value;
-
-            const gameInputs = document.querySelectorAll(`.game-input-${visitId}`);
-            let gamesArray = [];
-            gameInputs.forEach(input => { if(input.value.trim() !== '') gamesArray.push(input.value.trim()); });
-
-            if(gamesArray.length === 0) return alert("لطفاً حداقل یک بازی را وارد کنید.");
-            if(!entryInput || !exitInput) return alert("ساعت ورود و خروج الزامی است.");
-
-            const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
-            const member = members[memberIndex];
-            const visitIndex = member.visits.findIndex(v => v.visitId === visitId);
-
-            let [eH, eM] = entryInput.split(':').map(Number);
-            let [xH, xM] = exitInput.split(':').map(Number);
-            
-            let entryMins = eH * 60 + eM; let exitMins = xH * 60 + xM;
-            if(exitMins < entryMins) exitMins += 24 * 60; 
-            
-            let durationMins = exitMins - entryMins;
-            let ratePerHour = member.tier === 'gold' ? 20000 : (member.tier === 'silver' ? 30000 : 50000);
-            
-            let rawCost = durationMins * (ratePerHour / 60);
-            let finalCost = Math.round(rawCost / 500) * 500; 
-
-            member.visits[visitIndex].games = gamesArray;
-            member.visits[visitIndex].entry = entryInput;
-            member.visits[visitIndex].exit = exitInput;
-            member.visits[visitIndex].duration = durationMins;
-            member.visits[visitIndex].cost = finalCost;
-            member.visits[visitIndex].paymentStatus = paymentInput;
-            member.visits[visitIndex].status = 'completed'; 
-
-            saveData(); renderVisitsAndStats();
-        }
+        async function completeCheckout(visitId) {
+		    const entryInput = document.getElementById(`entry_edit_${visitId}`).value;
+		    const exitInput = document.getElementById(`exit_${visitId}`).value;
+		    const paymentInput = document.getElementById(`payment_${visitId}`).value;
+		
+		    const gameInputs = document.querySelectorAll(`.game-input-${visitId}`);
+		
+		    let gamesArray = [];
+		
+		    gameInputs.forEach(input => {
+		        if (input.value.trim() !== '') {
+		            gamesArray.push(input.value.trim());
+		        }
+		    });
+		
+		    if (gamesArray.length === 0) {
+		        return alert("لطفاً حداقل یک بازی را وارد کنید.");
+		    }
+		
+		    if (!entryInput || !exitInput) {
+		        return alert("ساعت ورود و خروج الزامی است.");
+		    }
+		
+		    const memberIndex = members.findIndex(
+		        m => m.id === currentActiveMemberId
+		    );
+		
+		    if (memberIndex === -1) {
+		        return alert("عضو پیدا نشد.");
+		    }
+		
+		    const member = members[memberIndex];
+		
+		    const visitIndex = member.visits.findIndex(
+		        v => v.visitId === visitId
+		    );
+		
+		    if (visitIndex === -1) {
+		        return alert("سابقه حضور پیدا نشد.");
+		    }
+		
+		    let [eH, eM] = entryInput.split(':').map(Number);
+		    let [xH, xM] = exitInput.split(':').map(Number);
+		
+		    let entryMins = eH * 60 + eM;
+		    let exitMins = xH * 60 + xM;
+		
+		    // اگر خروج مربوط به روز بعد باشد
+		    if (exitMins < entryMins) {
+		        exitMins += 24 * 60;
+		    }
+		
+		    const durationMins = exitMins - entryMins;
+		
+		    let ratePerHour =
+		        member.tier === 'gold'
+		            ? 20000
+		            : (member.tier === 'silver' ? 30000 : 50000);
+		
+		    let rawCost = durationMins * (ratePerHour / 60);
+		
+		    let finalCost = Math.round(rawCost / 500) * 500;
+		
+		    // بروزرسانی در Supabase
+		    const { data, error } = await supabaseClient
+		        .from('visits')
+		        .update({
+		            entry_time: entryInput,
+		            exit_time: exitInput,
+		            duration: durationMins,
+		            amount: finalCost,
+		            payment_status: paymentInput,
+		            status: 'completed',
+		            games: gamesArray
+		        })
+		        .eq('id', visitId)
+		        .eq('member_id', member.id)
+		        .select()
+		        .single();
+		
+		    if (error) {
+		        console.error('خطا در ثبت خروج:', error);
+		        return alert('ثبت خروج در دیتابیس انجام نشد.');
+		    }
+		
+		    // بروزرسانی اطلاعات داخل صفحه
+		    member.visits[visitIndex] = {
+		        visitId: data.id,
+		        date: data.visit_date,
+		        entry: data.entry_time,
+		        exit: data.exit_time,
+		        duration: data.duration,
+		        status: data.status,
+		        games: data.games || [],
+		        cost: Number(data.amount) || 0,
+		        paymentStatus: data.payment_status || 'paid'
+		    };
+		
+		    renderVisitsAndStats();
+		
+		    alert(`خروج ثبت شد.\nمبلغ: ${finalCost.toLocaleString()} تومان`);
+		}
 
         function payDebt(visitId) {
             if(confirm("آیا مبلغ بدهی این جلسه تسویه شد؟")) {
