@@ -862,7 +862,7 @@
                                 <div id="games_container_${visit.visitId}" style="margin-top:10px;">
                                     <input type="text" class="formal-input game-input-${visit.visitId}" placeholder="نام بازی اول...">
                                 </div>
-                                <button class="btn-add-game" onclick="addGameField(${visit.visitId})">+ ثبت یک بازی دیگر در این جلسه</button>
+                                <button class="btn-add-game" onclick="addGameField('${visit.visitId}')">+ ثبت یک بازی دیگر در این جلسه</button>
 
                                 <div class="input-row" style="margin-top:10px;">
                                     <div style="flex:1;">
@@ -883,7 +883,7 @@
                                     </select>
                                 </div>
 
-                                <button class="btn-primary btn-success" onclick="completeCheckout(${visit.visitId})">✅ تایید، محاسبه هزینه و پایان</button>
+                                <button class="btn-primary btn-success" onclick="completeCheckout('${visit.visitId}')">✅ تایید، محاسبه هزینه و پایان</button>
                             </div>
                         </div>
                     `;
@@ -895,14 +895,14 @@
                     let isDebt = visit.paymentStatus === 'debt';
                     
                     let paymentHtml = isDebt 
-                        ? `<div class="status-badge-debt">بدهی: ${costFormatted} تومان</div> <button class="btn-danger-outline" onclick="payDebt(${visit.visitId})" style="margin-right:10px; border-color:#27ae60; color:#27ae60;">💰 تسویه این قبض</button>`
+                        ? `<div class="status-badge-debt">بدهی: ${costFormatted} تومان</div> <button class="btn-danger-outline" onclick="payDebt('${visit.visitId}')" style="margin-right:10px; border-color:#27ae60; color:#27ae60;">💰 تسویه این قبض</button>`
                         : `<div class="status-badge-paid">مبلغ ${costFormatted} تومان (پرداخت شد)</div>`;
 
                     let cardClass = isDebt ? 'card-debt' : '';
 
                     historyContainer.innerHTML += `
                         <div class="history-card ${cardClass}">
-                            <button class="btn-delete-visit" onclick="removeVisit(${visit.visitId})">✖</button>
+                            <button class="btn-delete-visit" onclick="removeVisit('${visit.visitId}')">✖</button>
                             <div class="history-date">📅 ${visit.date}</div>
                             <div>${gamesHtml}</div>
                             <div class="history-detail">
