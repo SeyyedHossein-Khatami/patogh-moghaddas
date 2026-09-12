@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سامانه مدیریت پاتوق مقدس</title>
+    
+    <!-- تنظیمات تبدیل به اپلیکیشن موبایل (PWA) -->
+    <meta name="theme-color" content="#0c2c5c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="پاتوق مقدس">
+    
+    <!-- آیکون اختصاصی برای صفحه اصلی موبایل (کد شده به صورت Base64) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMGMyYzVjIi8+PHRleHQgeD0iNTAiIHk9IjcwIiBmb250LXNpemU9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYzVhMDU5Ij7wn4+b77iPPC90ZXh0Pjwvc3ZnPg==">
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMGMyYzVjIi8+PHRleHQgeD0iNTAiIHk9IjcwIiBmb250LXNpemU9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYzVhMDU5Ij7wn4+b77iPPC90ZXh0Pjwvc3ZnPg==">
+
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --lapis-lazuli: #0c2c5c; --turquoise: #0f7b8e; --bg-color: #f4f7f6;
+            --text-dark: #1c2833; --text-light: #566573;
+            --gold-classic: #c5a059; --gold-bg: #fdfaf2;
+            --silver-classic: #7f8c8d; --silver-bg: #f7f9f9;
+            --normal-classic: #34495e; --normal-bg: #ffffff;
+            --shadow-formal: 0 4px 12px rgba(12, 44, 92, 0.08);
+            --border-radius-classic: 8px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif; background-color: var(--bg-color);
+            margin: 0; padding: 0 0 20px 0; color: var(--text-dark);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container { width: 100%; max-width: 500px; padding: 0 15px; }
+
+        .header-panel {
+            width: 100%; background: linear-gradient(135deg, var(--lapis-lazuli) 0%, var(--turquoise) 100%);
+            padding: 40px 15px 25px; text-align: center; color: white;
+            box-shadow: 0 4px 15px rgba(15, 123, 142, 0.3); border-bottom: 4px solid var(--gold-classic);
+            margin-bottom: 25px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+        }
+        .header-panel h1 { margin: 0 0 8px 0; font-size: 22px; font-weight: 700; }
+        .header-panel p { margin: 0; font-size: 13px; color: #e0f2f1; }
+
+        /* دکمه داشبورد */
+        .btn-dashboard {
+            width: 100%; background: #c5a059; color: white; border: none; padding: 15px;
+            border-radius: 12px; font-family: 'Vazirmatn'; font-weight: bold; font-size: 16px;
+            margin-bottom: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(197, 160, 89, 0.3); transition: 0.2s;
+        }
+        .btn-dashboard:active { transform: scale(0.98); background: #b39150; }
+
+        .control-panel {
+            background: white; padding: 18px; border-radius: var(--border-radius-classic);
+            box-shadow: var(--shadow-formal); margin-bottom: 20px; border-top: 3px solid var(--lapis-lazuli);
+        }
+        .input-row { display: flex; gap: 10px; margin-bottom: 12px; width: 100%; }
+        .formal-input {
+            width: 100%; padding: 12px; font-family: 'Vazirmatn', sans-serif;
+            border: 1px solid #d5dbdb; border-radius: 6px; outline: none; font-size: 14px;
+            background-color: #fafafa; transition: 0.2s;
+        }
+        .formal-input:focus { border-color: var(--turquoise); background-color: white; }
+
+        .btn-primary {
+            width: 100%; padding: 12px; background-color: var(--turquoise); color: white;
+            border: none; border-radius: 6px; font-family: 'Vazirmatn', sans-serif; font-weight: 600;
+            font-size: 14px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-primary:active { background-color: #0c6373; }
+        .btn-success { background-color: #27ae60; } .btn-success:active { background-color: #219a52; }
+
+        .search-wrapper { position: relative; margin-bottom: 25px; }
+        .search-icon { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); font-size: 18px; }
+        .search-box { padding-right: 40px; border: 2px solid #bdc3c7; }
+
+        .member-card {
+            background: white; padding: 16px; margin-bottom: 12px; border-radius: var(--border-radius-classic);
+            box-shadow: var(--shadow-formal); display: flex; justify-content: space-between; align-items: center;
+            border-right: 5px solid transparent; overflow: hidden;
+        }
+        .card-gold { border-right-color: var(--gold-classic); background-color: var(--gold-bg); }
+        .card-silver { border-right-color: var(--silver-classic); background-color: var(--silver-bg); }
+        .card-normal { border-right-color: var(--normal-classic); background-color: var(--normal-bg); }
+        
+        .member-info { display: flex; flex-direction: column; z-index: 1; flex: 1; }
+        .member-name { font-weight: 700; color: var(--lapis-lazuli); font-size: 16px; margin-bottom: 6px; }
+        .member-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; width: fit-content; border: 1px solid; }
+        
+        .card-gold .member-badge { background-color: #fdf2d6; color: var(--gold-classic); border-color: #f5deaa; }
+        .card-silver .member-badge { background-color: #eaeded; color: var(--silver-classic); border-color: #d5dbdb; }
+        .card-normal .member-badge { background-color: #f2f3f4; color: #34495e; border-color: #bdc3c7; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 8px; z-index: 1; min-width: 90px; }
+        .btn-action {
+            background: white; border: 1px solid #d5dbdb; font-size: 12px; font-family: 'Vazirmatn', sans-serif;
+            cursor: pointer; padding: 6px 10px; border-radius: 4px; font-weight: 600; width: 100%;
+        }
+        .btn-open { color: var(--turquoise); border-color: var(--turquoise); background: #e0f2f1; }
+        .btn-remove { color: #c0392b; }
+        
+        .active-status { font-size: 10px; background: #27ae60; color: white; padding: 2px 6px; border-radius: 10px; margin-top: 5px; display: inline-block; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* مدال (پنجره پاپ آپ عمومی) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(12, 44, 92, 0.8); 
+            display: none; justify-content: center; align-items: flex-end; z-index: 100;
+        }
+        .modal-content {
+            background: var(--bg-color); width: 100%; max-width: 500px; max-height: 92vh;
+            border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px;
+            display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; overflow-y: auto;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e8e8; padding-bottom: 15px; margin-bottom: 15px; }
+        .modal-title { font-weight: 700; color: var(--lapis-lazuli); font-size: 18px; margin: 0; }
+        .close-btn { background: none; border: none; font-size: 24px; color: #7f8c8d; cursor: pointer; }
+
+        /* استایل های گزارشات جامع */
+        .report-section { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .report-title { font-size: 15px; color: var(--lapis-lazuli); border-bottom: 2px solid #f0f2f5; padding-bottom: 8px; margin-top: 0; margin-bottom: 15px; display:flex; align-items:center; gap:8px;}
+        .report-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; padding-bottom:5px; border-bottom:1px dashed #eee;}
+        .report-row:last-child { border: none; margin-bottom: 0; padding-bottom: 0;}
+        .rev-total { font-size: 18px; font-weight: bold; color: #27ae60; text-align: center; margin-bottom: 10px; background: #f0fdf4; padding: 10px; border-radius: 8px;}
+        .tier-rev { font-size: 12px; display: inline-block; padding: 3px 8px; border-radius: 4px; margin: 2px; }
+        .tr-g { background: #fdf2d6; color: #b7950b; }
+        .tr-s { background: #eaeded; color: #7f8c8d; }
+        .tr-n { background: #eef2f5; color: #34495e; }
+
+        /* استایل های پرونده شخصی */
+        .tier-changer-box {
+            background: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e8e8;
+        }
+        .stats-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: white; border: 1px solid #e5e8e8; padding: 12px; border-radius: 8px; }
+        .stat-card.main-stat { background: var(--lapis-lazuli); color: white; text-align: center; border: none; }
+        .stat-card.debt-stat { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; text-align: center; }
+        
+        .stat-title { font-size: 12px; color: var(--text-light); margin-bottom: 5px; font-weight: bold; }
+        .stat-value { font-size: 18px; font-weight: bold; }
+        .tag-container { display: flex; flex-wrap: wrap; gap: 5px; }
+        .stat-tag { font-size: 11px; padding: 4px 8px; border-radius: 20px; font-weight: bold; background: #e0f2f1; color: var(--turquoise); border: 1px solid #b2dfdb; }
+
+        .visit-form { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
+        .btn-danger-outline { background: none; border: 1px solid #e74c3c; color: #e74c3c; font-family: 'Vazirmatn'; border-radius: 4px; font-size: 11px; cursor: pointer; padding: 4px 8px; }
+        .btn-add-game { background: #eef2f5; border: 1px dashed #bdc3c7; color: #2c3e50; font-family: 'Vazirmatn'; border-radius: 4px; font-size: 12px; cursor: pointer; padding: 6px; width: 100%; margin-top: 5px; }
+        .btn-global-clear { width: 100%; background: none; border: 1px dashed #e74c3c; color: #e74c3c; border-radius: 6px; font-size: 13px; cursor: pointer; padding: 12px; font-family: 'Vazirmatn'; margin-top: 15px; margin-bottom: 30px; font-weight: bold; }
+
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-card { background: white; border-right: 3px solid var(--turquoise); padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 13px; position: relative;}
+        .card-active { border-right-color: #27ae60; background-color: #f0fdf4; border-left: 1px solid #dcfce7; border-top: 1px solid #dcfce7; border-bottom: 1px solid #dcfce7;}
+        .card-debt { border-right-color: #e74c3c; }
+        .history-date { font-weight: bold; color: var(--lapis-lazuli); margin-bottom: 10px; }
+        .history-detail { color: var(--text-light); display: flex; justify-content: space-between; margin-top: 10px; background: #f8f9fa; padding: 5px; border-radius: 4px;}
+        .financial-detail { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #ddd; padding-top: 10px; font-weight: bold;}
+        .history-game { background: #eef2f5; padding: 3px 8px; border-radius: 4px; font-weight: bold; color: #2c3e50; display: inline-block; margin-top: 5px; margin-left: 3px;}
+        .btn-delete-visit { position: absolute; left: 10px; top: 10px; background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; }
+        .checkout-box { margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px; }
+        .status-badge-paid { color: #27ae60; font-size: 11px; padding: 2px 6px; border: 1px solid #27ae60; border-radius: 4px;}
+        .status-badge-debt { color: #e74c3c; font-size: 11px; padding: 2px 6px; border: 1px solid #e74c3c; border-radius: 4px;}
+    </style>
+</head>
+<body>
+
+    <div class="header-panel">
+        <h1>﷽</h1>
+        <h1>سامانه یکپارچه پاتوق مقدس</h1>
+        <p>مدیریت مشتریان و حسابداری کافه</p>
+    </div>
+
+    <div class="container">
+        <!-- دکمه داشبورد گزارشات جامع -->
+        <button class="btn-dashboard" onclick="openGlobalReports()">📊 داشبورد و گزارشات جامع کافه</button>
+
+        <div class="control-panel">
+            <div class="input-row">
+                <input type="text" id="newName" class="formal-input" placeholder="نام عضو جدید...">
+                <select id="newTier" class="formal-input">
+                    <option value="normal">عضو عادی (ساعتی ۵۰ت)</option>
+                    <option value="silver">کارت نقره‌ای (ساعتی ۳۰ت)</option>
+                    <option value="gold">کارت طلایی (ساعتی ۲۰ت)</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="addMember()">➕ ثبت عضو جدید در سیستم</button>
+        </div>
+
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" class="formal-input search-box" placeholder="جستجوی سریع اعضا..." onkeyup="filterMembers()">
+        </div>
+
+        <div id="membersList"></div>
+
+        <button class="btn-global-clear" onclick="clearAllSystemHistory()">⚠️ پاکسازی تاریخچه و سوابق کل اعضای سیستم</button>
+    </div>
+
+    <!-- پاپ آپ پرونده شخصی -->
+    <div class="modal-overlay" id="visitModal" onclick="closeModal(event, 'visitModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalMemberName">نام شخص</h2>
+                <button class="close-btn" onclick="closeModal(true, 'visitModal')">×</button>
+            </div>
+
+            <!-- بخش تغییر سطح کاربری -->
+            <div class="tier-changer-box">
+                <span style="font-size: 13px; font-weight: bold; color: var(--lapis-lazuli);">سطح کاربری:</span>
+                <select id="changeTierSelect" onchange="updateMemberTier(this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid #bdc3c7; font-family: 'Vazirmatn'; font-size: 13px; outline: none; background: #f8f9fa;">
+                    <option value="gold">کارت طلایی</option>
+                    <option value="silver">کارت نقره‌ای</option>
+                    <option value="normal">عضو عادی</option>
+                </select>
+            </div>
+
+            <div id="memberStatsDashboard"></div>
+
+            <div class="visit-form">
+                <h3 style="margin-top:0; color:var(--lapis-lazuli);">ثبت پذیرش جدید</h3>
+                <p style="font-size: 12px; color: gray; margin-bottom: 15px;">با زدن دکمه زیر، ساعت ورود ثبت شده و محاسبه زمان آغاز می‌گردد.</p>
+                <button class="btn-primary" onclick="registerEntry()">⏳ ثبت ورود (همین الان)</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                <h3 style="font-size: 14px; color: var(--lapis-lazuli); margin: 0;">📋 پرونده‌های باز و تاریخچه</h3>
+                <button class="btn-danger-outline" onclick="clearMemberHistory()">🗑️ حذف کل تاریخچه</button>
+            </div>
+            
+            <div class="history-list" id="historyList" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- پاپ آپ گزارشات جامع -->
+    <div class="modal-overlay" id="reportsModal" onclick="closeModal(event, 'reportsModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">📊 گزارشات جامع و داشبورد</h2>
+                <button class="close-btn" onclick="closeModal(true, 'reportsModal')">×</button>
+            </div>
+            <div id="globalReportsContainer">
+                <!-- گزارشات اینجا لود میشوند -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let members = [];
+        let currentActiveMemberId = null;
+
+        function loadData() {
+            const savedData = localStorage.getItem('patoghSystemData');
+            if (savedData) {
+                members = JSON.parse(savedData);
+                members.forEach(m => { 
+                    if(!m.visits) m.visits = []; 
+                    if(!m.tier) m.tier = 'normal'; 
+                    m.visits.forEach(v => {
+                        if(v.game && !v.games) { v.games = [v.game]; }
+                        if(v.cost === undefined) { v.cost = 0; }
+                        if(!v.paymentStatus) { v.paymentStatus = 'paid'; }
+                    });
+                });
+            } else { members = []; }
+        }
+
+        function saveData() { localStorage.setItem('patoghSystemData', JSON.stringify(members)); }
+
+        function renderList(filterWord = "") {
+            const container = document.getElementById('membersList');
+            container.innerHTML = "";
+            const searchVal = filterWord.trim();
+
+            members.forEach(member => {
+                if (member.name.includes(searchVal)) {
+                    const tierLabel = member.tier === 'gold' ? 'کارت طلایی' : (member.tier === 'silver' ? 'کارت نقره‌ای' : 'عضو عادی');
+                    const cssClass = member.tier === 'gold' ? 'card-gold' : (member.tier === 'silver' ? 'card-silver' : 'card-normal');
+                    
+                    let hasActiveGame = member.visits.some(v => v.status === 'playing');
+                    let activeLabel = hasActiveGame ? `<div class="active-status">⏳ داخل کافه</div>` : '';
+                    let totalDebt = member.visits.reduce((sum, v) => (v.status === 'completed' && v.paymentStatus === 'debt') ? sum + v.cost : sum, 0);
+                    let debtLabel = totalDebt > 0 ? `<div style="font-size: 10px; color: #e74c3c; margin-top:5px; font-weight:bold;">⚠️ بدهکار</div>` : '';
+
+                    container.innerHTML += `
+                        <div class="member-card ${cssClass}">
+                            <div class="member-info">
+                                <div class="member-name">${member.name}</div>
+                                <div class="member-badge">${tierLabel}</div>
+                                ${activeLabel}
+                                ${debtLabel}
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn-action btn-open" onclick="openModal(${member.id})">📝 پرونده</button>
+                                <button class="btn-action btn-remove" onclick="removeMember(${member.id})">حذف فرد</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function filterMembers() { renderList(document.getElementById('searchInput').value); }
+
+        function addMember() {
+            const nameEl = document.getElementById('newName');
+            const newName = nameEl.value.trim();
+            if (!newName) return alert("لطفاً نام را وارد نمایید.");
+            members.unshift({ id: Date.now(), name: newName, tier: document.getElementById('newTier').value, visits: [] });
+            saveData(); filterMembers(); nameEl.value = "";
+        }
+
+        function removeMember(id) {
+            if (confirm("آیا از حذف این شخص و تمام سوابق او اطمینان دارید؟")) {
+                members = members.filter(m => m.id !== id);
+                saveData(); filterMembers();
+            }
+        }
+
+        function openModal(id) {
+            currentActiveMemberId = id;
+            const member = members.find(m => m.id === id);
+            document.getElementById('modalMemberName').innerText = `پرونده: ${member.name}`;
+            document.getElementById('changeTierSelect').value = member.tier;
+            renderVisitsAndStats();
+            document.getElementById('visitModal').style.display = 'flex';
+        }
+
+        function closeModal(force = false, modalId) {
+            if (force === true || force.target === document.getElementById(modalId)) {
+                document.getElementById(modalId).style.display = 'none';
+                if(modalId === 'visitModal') {
+                    currentActiveMemberId = null;
+                    filterMembers(); 
+                }
+            }
+        }
+
+        function updateMemberTier(newTier) {
+            const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
+            if(memberIndex > -1) {
+                members[memberIndex].tier = newTier;
+                saveData(); renderVisitsAndStats(); 
+            }
+        }
+
+        function registerEntry() {
+            const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
+            if(members[memberIndex].visits.some(v => v.status === 'playing')) {
+                return alert("این شخص یک پرونده باز دارد. ابتدا خروج قبلی را ثبت کنید.");
+            }
+            const today = new Date().toLocaleDateString('fa-IR');
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+            members[memberIndex].visits.unshift({
+                visitId: Date.now(), date: today, entry: timeString, status: 'playing', games: [], cost: 0, paymentStatus: 'paid'
+            });
+            saveData(); renderVisitsAndStats();
+        }
+
+        function addGameField(visitId) {
+            const container = document.getElementById(`games_container_${visitId}`);
+            const input = document.createElement('input');
+            input.type = 'text'; input.className = `formal-input game-input-${visitId}`;
+            input.placeholder = "نام بازی بعدی..."; input.style.marginTop = "5px";
+            container.appendChild(input);
+        }
+
+        function completeCheckout(visitId) {
+            const entryInput = document.getElementById(`entry_edit_${visitId}`).value;
+            const exitInput = document.getElementById(`exit_${visitId}`).value;
+            const paymentInput = document.getElementById(`payment_${visitId}`).value;
+
+            const gameInputs = document.querySelectorAll(`.game-input-${visitId}`);
+            let gamesArray = [];
+            gameInputs.forEach(input => { if(input.value.trim() !== '') gamesArray.push(input.value.trim()); });
+
+            if(gamesArray.length === 0) return alert("لطفاً حداقل یک بازی را وارد کنید.");
+            if(!entryInput || !exitInput) return alert("ساعت ورود و خروج الزامی است.");
+
+            const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
+            const member = members[memberIndex];
+            const visitIndex = member.visits.findIndex(v => v.visitId === visitId);
+
+            let [eH, eM] = entryInput.split(':').map(Number);
+            let [xH, xM] = exitInput.split(':').map(Number);
+            
+            let entryMins = eH * 60 + eM; let exitMins = xH * 60 + xM;
+            if(exitMins < entryMins) exitMins += 24 * 60; 
+            
+            let durationMins = exitMins - entryMins;
+            let ratePerHour = member.tier === 'gold' ? 20000 : (member.tier === 'silver' ? 30000 : 50000);
+            
+            let rawCost = durationMins * (ratePerHour / 60);
+            let finalCost = Math.round(rawCost / 500) * 500; 
+
+            member.visits[visitIndex].games = gamesArray;
+            member.visits[visitIndex].entry = entryInput;
+            member.visits[visitIndex].exit = exitInput;
+            member.visits[visitIndex].duration = durationMins;
+            member.visits[visitIndex].cost = finalCost;
+            member.visits[visitIndex].paymentStatus = paymentInput;
+            member.visits[visitIndex].status = 'completed'; 
+
+            saveData(); renderVisitsAndStats();
+        }
+
+        function payDebt(visitId) {
+            if(confirm("آیا مبلغ بدهی این جلسه تسویه شد؟")) {
+                const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
+                const visitIndex = members[memberIndex].visits.findIndex(v => v.visitId === visitId);
+                members[memberIndex].visits[visitIndex].paymentStatus = 'paid';
+                saveData(); renderVisitsAndStats();
+            }
+        }
+
+        function removeVisit(visitId) {
+            if(confirm("آیا این سابقه حذف شود؟")) {
+                const member = members.find(m => m.id === currentActiveMemberId);
+                member.visits = member.visits.filter(v => v.visitId !== visitId);
+                saveData(); renderVisitsAndStats();
+            }
+        }
+
+        function clearMemberHistory() {
+            if(confirm("آیا از حذف کل تاریخچه حضور این شخص اطمینان دارید؟")) {
+                const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
+                members[memberIndex].visits = [];
+                saveData(); renderVisitsAndStats();
+            }
+        }
+        
+        function clearAllSystemHistory() {
+            if(confirm("⚠️ آیا می‌خواهید گزارشات حضور تمام اعضای کافه را پاک کنید؟")) {
+                if(confirm("عمل غیرقابل بازگشت است! مطمئنید؟")) {
+                    members.forEach(m => m.visits = []);
+                    saveData(); filterMembers(); alert("پاکسازی شد.");
+                }
+            }
+        }
+
+        // --- بخش تولید گزارشات جامع ---
+        function openGlobalReports() {
+            const container = document.getElementById('globalReportsContainer');
+            
+            let totalVisits = 0;
+            let gamesCount = {};
+            let revAllTime = { total: 0, gold: 0, silver: 0, normal: 0 };
+            let revCurrentYear = { total: 0, gold: 0, silver: 0, normal: 0 };
+            let revCurrentMonth = { total: 0, gold: 0, silver: 0, normal: 0 };
+            
+            let topMembersArr = [];
+
+            // استخراج تاریخ روز برای تشخیص ماه و سال جاری
+            const todayFA = new Date().toLocaleDateString('fa-IR');
+            const todayParts = todayFA.split('/'); // [1405, 5, 20]
+            const currentYear = todayParts[0];
+            const currentMonth = todayParts.length > 1 ? `${todayParts[0]}/${todayParts[1]}` : "";
+
+            members.forEach(m => {
+                let memberVisits = 0;
+                let memberTier = m.tier || 'normal';
+
+                m.visits.forEach(v => {
+                    if(v.status === 'completed') {
+                        totalVisits++;
+                        memberVisits++;
+
+                        // شمارش بازی ها
+                        let gList = v.games || [];
+                        gList.forEach(g => { gamesCount[g] = (gamesCount[g] || 0) + 1; });
+
+                        // محاسبه درآمد (همه فاکتورهای صادر شده چه نقد چه بدهی لحاظ میشود بعنوان کارکرد)
+                        let cost = v.cost || 0;
+                        let vDateParts = v.date.split('/');
+                        let vYear = vDateParts[0];
+                        let vMonth = vDateParts.length > 1 ? `${vDateParts[0]}/${vDateParts[1]}` : "";
+
+                        // کل
+                        revAllTime.total += cost;
+                        revAllTime[memberTier] += cost;
+
+                        // سال جاری
+                        if(vYear === currentYear) {
+                            revCurrentYear.total += cost;
+                            revCurrentYear[memberTier] += cost;
+                        }
+
+                        // ماه جاری
+                        if(vMonth === currentMonth) {
+                            revCurrentMonth.total += cost;
+                            revCurrentMonth[memberTier] += cost;
+                        }
+                    }
+                });
+
+                if(memberVisits > 0) {
+                    topMembersArr.push({ name: m.name, count: memberVisits, tier: memberTier });
+                }
+            });
+
+            // مرتب سازی بازی ها
+            let sortedGames = Object.keys(gamesCount).sort((a,b) => gamesCount[b] - gamesCount[a]);
+            let gamesHtml = sortedGames.length > 0 
+                ? sortedGames.map(g => `<div class="report-row"><span>🎮 ${g}</span> <strong>${gamesCount[g]} بار</strong></div>`).join('')
+                : "<p style='font-size:12px; color:gray; text-align:center;'>هنوز بازی ثبت نشده است.</p>";
+
+            // مرتب سازی افراد
+            topMembersArr.sort((a,b) => b.count - a.count);
+            let membersHtml = topMembersArr.slice(0, 10).map((tm, idx) => `
+                <div class="report-row">
+                    <span>${idx+1}. ${tm.name}</span>
+                    <strong>${tm.count} جلسه</strong>
+                </div>
+            `).join('');
+
+            // فرمت پول
+            const fM = (num) => num.toLocaleString('fa-IR');
+
+            container.innerHTML = `
+                <div class="report-section">
+                    <h4 class="report-title">👥 آمار کلی حضور</h4>
+                    <div class="report-row" style="font-size:15px; font-weight:bold; color:var(--lapis-lazuli);">
+                        <span>مجموع کل دفعات حضور در کافه:</span>
+                        <span>${fM(totalVisits)} جلسه</span>
+                    </div>
+                    <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+                        <h5 style="margin:0 0 10px 0; color:var(--text-light); font-size:13px;">🏆 ۱۰ مشتری وفادار و پرتردد:</h5>
+                        ${membersHtml || "<p style='font-size:12px; color:gray;'>داده ای موجود نیست.</p>"}
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h4 class="report-title">💰 گزارش مالی و کارکرد کافه</h4>
+                    
+                    <!-- ماه جاری -->
+                    <div style="background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #e5e8e8; margin-bottom:10px;">
+                        <div style="font-size:12px; font-weight:bold; color:gray; text-align:center; margin-bottom:5px;">درآمد ماه جاری (${currentMonth})</div>
+                        <div class="rev-total">${fM(revCurrentMonth.total)} تومان</div>
+                        <div style="text-align:center;">
+                            <span class="tier-rev tr-g">طلایی: ${fM(revCurrentMonth.gold)}</span>
+                            <span class="tier-rev tr-s">نقره ای: ${fM(revCurrentMonth.silver)}</span>
+                            <span class="tier-rev tr-n">عادی: ${fM(revCurrentMonth.normal)}</span>
+                        </div>
+                    </div>
+
+                    <!-- سال جاری -->
+                    <div style="background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #e5e8e8; margin-bottom:10px;">
+                        <div style="font-size:12px; font-weight:bold; color:gray; text-align:center; margin-bottom:5px;">درآمد سال جاری (${currentYear})</div>
+                        <div class="rev-total" style="color:#2980b9;">${fM(revCurrentYear.total)} تومان</div>
+                        <div style="text-align:center;">
+                            <span class="tier-rev tr-g">طلایی: ${fM(revCurrentYear.gold)}</span>
+                            <span class="tier-rev tr-s">نقره ای: ${fM(revCurrentYear.silver)}</span>
+                            <span class="tier-rev tr-n">عادی: ${fM(revCurrentYear.normal)}</span>
+                        </div>
+                    </div>
+
+                    <!-- کل زمان ها -->
+                    <div style="background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #e5e8e8;">
+                        <div style="font-size:12px; font-weight:bold; color:gray; text-align:center; margin-bottom:5px;">مجموع درآمد کل سیستم (تا کنون)</div>
+                        <div class="rev-total" style="color:#8e44ad;">${fM(revAllTime.total)} تومان</div>
+                        <div style="text-align:center;">
+                            <span class="tier-rev tr-g">طلایی: ${fM(revAllTime.gold)}</span>
+                            <span class="tier-rev tr-s">نقره ای: ${fM(revAllTime.silver)}</span>
+                            <span class="tier-rev tr-n">عادی: ${fM(revAllTime.normal)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h4 class="report-title">🎲 محبوب‌ترین بازی‌ها</h4>
+                    ${gamesHtml}
+                </div>
+            `;
+
+            document.getElementById('reportsModal').style.display = 'flex';
+        }
+
+        // --- بخش رندر پرونده شخصی ---
+        function renderVisitsAndStats() {
+            const member = members.find(m => m.id === currentActiveMemberId);
+            const historyContainer = document.getElementById('historyList');
+            const statsContainer = document.getElementById('memberStatsDashboard');
+            historyContainer.innerHTML = ""; statsContainer.innerHTML = "";
+
+            if (!member.visits || member.visits.length === 0) {
+                historyContainer.innerHTML = "<p style='text-align:center; color:gray; font-size:13px;'>سابقه‌ای وجود ندارد.</p>";
+                return;
+            }
+
+            let completedVisits = member.visits.filter(v => v.status !== 'playing');
+            let totalVisits = completedVisits.length;
+            let totalDebt = 0; let gameStats = {}; 
+
+            completedVisits.forEach(v => {
+                if(v.paymentStatus === 'debt') totalDebt += (v.cost || 0);
+                let gList = v.games ? v.games : (v.game ? [v.game] : []);
+                gList.forEach(g => { gameStats[g] = (gameStats[g] || 0) + 1; });
+            });
+
+            let gameTagsHtml = Object.keys(gameStats).length > 0 ? 
+                Object.keys(gameStats).map(g => `<span class="stat-tag">${g} (${gameStats[g]})</span>`).join('') :
+                '<span style="font-size:11px; color:gray;">هنوز بازی ثبت نشده</span>';
+                
+            let debtHtml = totalDebt > 0 ? `
+                <div class="stat-card debt-stat">
+                    <div class="stat-title">مجموع بدهی تسویه نشده</div>
+                    <div class="stat-value">${totalDebt.toLocaleString('fa-IR')} تومان</div>
+                </div>
+            ` : '';
+
+            statsContainer.innerHTML = `
+                <div class="stats-grid">
+                    ${debtHtml}
+                    <div class="stat-card main-stat">
+                        <div class="stat-title">پرونده های تکمیل شده</div>
+                        <div class="stat-value">${totalVisits} جلسه</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">سوابق بازی‌های انجام شده:</div>
+                        <div class="tag-container">${gameTagsHtml}</div>
+                    </div>
+                </div>
+            `;
+
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            const tariffText = member.tier === 'gold' ? 'ساعتی ۲۰,۰۰۰ تومان' : (member.tier === 'silver' ? 'ساعتی ۳۰,۰۰۰ تومان' : 'ساعتی ۵۰,۰۰۰ تومان');
+
+            member.visits.forEach(visit => {
+                if(visit.status === 'playing' || !visit.status) {
+                    historyContainer.innerHTML += `
+                        <div class="history-card card-active">
+                            <button class="btn-delete-visit" onclick="removeVisit(${visit.visitId})">✖</button>
+                            <div class="history-date">⏳ در حال حضور (تاریخ: ${visit.date})</div>
+                            <div style="font-size: 12px; color:#16a085; font-weight:bold;">تعرفه محاسبه فعلی: ${tariffText}</div>
+                            
+                            <div class="checkout-box">
+                                <label style="font-size:12px; color:gray; font-weight:bold;">ثبت جزئیات و تسویه (محاسبه خودکار):</label>
+                                
+                                <div id="games_container_${visit.visitId}" style="margin-top:10px;">
+                                    <input type="text" class="formal-input game-input-${visit.visitId}" placeholder="نام بازی اول...">
+                                </div>
+                                <button class="btn-add-game" onclick="addGameField(${visit.visitId})">+ ثبت یک بازی دیگر در این جلسه</button>
+
+                                <div class="input-row" style="margin-top:10px;">
+                                    <div style="flex:1;">
+                                        <label style="font-size:11px;">ساعت ورود:</label>
+                                        <input type="time" id="entry_edit_${visit.visitId}" class="formal-input" value="${visit.entry}">
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="font-size:11px;">ساعت خروج (الان):</label>
+                                        <input type="time" id="exit_${visit.visitId}" class="formal-input" value="${currentTime}">
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top:10px; margin-bottom:15px;">
+                                    <label style="font-size:11px;">وضعیت پرداخت این جلسه:</label>
+                                    <select id="payment_${visit.visitId}" class="formal-input">
+                                        <option value="paid">💰 نقدی/کارت (تسویه شد)</option>
+                                        <option value="debt">📒 ثبت به عنوان بدهی کاربر</option>
+                                    </select>
+                                </div>
+
+                                <button class="btn-primary btn-success" onclick="completeCheckout(${visit.visitId})">✅ تایید، محاسبه هزینه و پایان</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    let gList = visit.games ? visit.games : (visit.game ? [visit.game] : []);
+                    let gamesHtml = gList.map(g => `<span class="history-game">🎮 ${g}</span>`).join('');
+                    
+                    let costFormatted = (visit.cost || 0).toLocaleString('fa-IR');
+                    let isDebt = visit.paymentStatus === 'debt';
+                    
+                    let paymentHtml = isDebt 
+                        ? `<div class="status-badge-debt">بدهی: ${costFormatted} تومان</div> <button class="btn-danger-outline" onclick="payDebt(${visit.visitId})" style="margin-right:10px; border-color:#27ae60; color:#27ae60;">💰 تسویه این قبض</button>`
+                        : `<div class="status-badge-paid">مبلغ ${costFormatted} تومان (پرداخت شد)</div>`;
+
+                    let cardClass = isDebt ? 'card-debt' : '';
+
+                    historyContainer.innerHTML += `
+                        <div class="history-card ${cardClass}">
+                            <button class="btn-delete-visit" onclick="removeVisit(${visit.visitId})">✖</button>
+                            <div class="history-date">📅 ${visit.date}</div>
+                            <div>${gamesHtml}</div>
+                            <div class="history-detail">
+                                <span>ورود: ${visit.entry}</span>
+                                <span>خروج: ${visit.exit} <span style="font-size:10px; color:#bdc3c7;">(${visit.duration} دقیقه)</span></span>
+                            </div>
+                            <div class="financial-detail">
+                                ${paymentHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        loadData(); renderList();
+    </script>
+</body>
+</html>
