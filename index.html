@@ -852,7 +852,7 @@
                 if(visit.status === 'playing' || !visit.status) {
                     historyContainer.innerHTML += `
                         <div class="history-card card-active">
-                            <button class="btn-delete-visit" onclick="removeVisit(${visit.visitId})">✖</button>
+                            <button class="btn-delete-visit" onclick="removeVisit('${visit.visitId}')">✖</button>
                             <div class="history-date">⏳ در حال حضور (تاریخ: ${visit.date})</div>
                             <div style="font-size: 12px; color:#16a085; font-weight:bold;">تعرفه محاسبه فعلی: ${tariffText}</div>
                             
