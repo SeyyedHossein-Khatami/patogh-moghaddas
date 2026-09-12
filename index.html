@@ -264,24 +264,48 @@
 	);
 
 	async function loadData() {
-   	    const { data, error } = await supabaseClient
-        	.from('members')
-        	.select('*')
-        	.order('created_at', { ascending: false });
-
-    	    if (error) {
-       		console.error('خطا در دریافت اعضا:', error);
-        	alert('خطا در اتصال به دیتابیس اعضا.');
-        			members = [];
-        	return;
-    	    }
-
-    	    members = data.map(member => ({
-        	id: member.id,
-        	name: member.name,
-        	tier: member.tier || 'normal',
-        	visits: []
-    	    }));
+	    const { data: membersData, error: membersError } = await supabaseClient
+	        .from('members')
+	        .select('*')
+	        .order('created_at', { ascending: false });
+	
+	    if (membersError) {
+	        console.error('خطا در دریافت اعضا:', membersError);
+	        alert('خطا در اتصال به دیتابیس اعضا.');
+	        members = [];
+	        return;
+	    }
+	
+	    const { data: visitsData, error: visitsError } = await supabaseClient
+	        .from('visits')
+	        .select('*')
+	        .order('created_at', { ascending: false });
+	
+	    if (visitsError) {
+	        console.error('خطا در دریافت سوابق:', visitsError);
+	        alert('خطا در دریافت سوابق حضور.');
+	        return;
+	    }
+	
+	    members = membersData.map(member => ({
+	        id: member.id,
+	        name: member.name,
+	        tier: member.tier || 'normal',
+	
+	        visits: visitsData
+	            .filter(visit => visit.member_id === member.id)
+	            .map(visit => ({
+	                visitId: visit.id,
+	                date: visit.visit_date,
+	                entry: visit.entry_time,
+	                exit: visit.exit_time,
+	                duration: visit.duration,
+	                status: visit.status,
+	                games: visit.games || [],
+	                cost: Number(visit.amount) || 0,
+	                paymentStatus: visit.payment_status || 'paid'
+	            }))
+	    }));
 	}
 
  
