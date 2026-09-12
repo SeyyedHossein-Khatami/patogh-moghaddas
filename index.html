@@ -417,22 +417,79 @@
 
     		renderVisitsAndStats();
     		filterMembers();
-	}
+		}
 
-        function registerEntry() {
-            const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
-            if(members[memberIndex].visits.some(v => v.status === 'playing')) {
-                return alert("این شخص یک پرونده باز دارد. ابتدا خروج قبلی را ثبت کنید.");
-            }
-            const today = new Date().toLocaleDateString('fa-IR');
-            const now = new Date();
-            const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        async function registerEntry() {
+		    const memberIndex = members.findIndex(
+		        m => m.id === currentActiveMemberId
+		    );
+		
+		    if (memberIndex === -1) {
+		        return alert("عضو پیدا نشد.");
+		    }
+		
+		    const member = members[memberIndex];
+		
+		    // بررسی اینکه عضو قبلاً داخل کافه هست یا نه
+		    const { data: activeVisits, error: checkError } = await supabaseClient
+		        .from('visits')
+		        .select('id')
+		        .eq('member_id', member.id)
+		        .eq('status', 'playing');
+		
+		    if (checkError) {
+		        console.error('خطا در بررسی ورود فعال:', checkError);
+		        return alert('خطا در ارتباط با دیتابیس.');
+		    }
+		
+		    if (activeVisits && activeVisits.length > 0) {
+		        return alert("این شخص یک پرونده باز دارد. ابتدا خروج قبلی را ثبت کنید.");
+		    }
+		
+		    const now = new Date();
+		
+		    const today = now.toLocaleDateString('fa-IR');
+		
+		    const timeString =
+		        now.getHours().toString().padStart(2, '0') +
+		        ':' +
+		        now.getMinutes().toString().padStart(2, '0');
+		
+		    // ثبت ورود در دیتابیس
+		    const { data, error } = await supabaseClient
+		        .from('visits')
+		        .insert({
+		            member_id: member.id,
+		            visit_date: today,
+		            entry_time: timeString,
+		            status: 'playing',
+		            payment_status: 'paid',
+		            games: [],
+		            amount: 0
+		        })
+		        .select()
+		        .single();
+		
+		    if (error) {
+		        console.error('خطا در ثبت ورود:', error);
+		        return alert('ثبت ورود در دیتابیس انجام نشد.');
+		    }
 
-            members[memberIndex].visits.unshift({
-                visitId: Date.now(), date: today, entry: timeString, status: 'playing', games: [], cost: 0, paymentStatus: 'paid'
-            });
-            saveData(); renderVisitsAndStats();
-        }
+		    console.log('ورود با موفقیت ثبت شد:', data);
+		
+		    // اضافه کردن رکورد به اطلاعات فعلی صفحه
+		    member.visits.unshift({
+		        visitId: data.id,
+		        date: data.visit_date,
+		        entry: data.entry_time,
+		        status: data.status,
+		        games: data.games || [],
+		        cost: Number(data.amount) || 0,
+		        paymentStatus: data.payment_status || 'paid'
+		    });
+
+		    renderVisitsAndStats();
+		}
 
         function addGameField(visitId) {
             const container = document.getElementById(`games_container_${visitId}`);
