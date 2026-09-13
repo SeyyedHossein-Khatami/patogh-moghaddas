@@ -635,14 +635,47 @@
             }
         }
 
-        function removeVisit(visitId) {
-            if(confirm("آیا این سابقه حذف شود؟")) {
-                const member = members.find(m => m.id === currentActiveMemberId);
-                member.visits = member.visits.filter(v => v.visitId !== visitId);
-                saveData(); renderVisitsAndStats();
-            }
-        }
-
+        async function removeVisit(visitId) {
+		    if (!confirm("آیا این سابقه حذف شود؟")) {
+		        return;
+		    }
+		
+		    const member = members.find(
+		        m => m.id === currentActiveMemberId
+		    );
+		
+		    if (!member) {
+		        return alert("عضو پیدا نشد.");
+		    }
+		
+		    const visit = member.visits.find(
+		        v => v.visitId === visitId
+		    );
+		
+		    if (!visit) {
+		        return alert("سابقه حضور پیدا نشد.");
+		    }
+		
+		    const { error } = await supabaseClient
+		        .from('visits')
+		        .delete()
+		        .eq('id', visitId)
+		        .eq('member_id', member.id);
+		
+		    if (error) {
+		        console.error('خطا در حذف سابقه:', error);
+		        return alert('حذف سابقه از دیتابیس انجام نشد.');
+		    }
+		
+		    member.visits = member.visits.filter(
+		        v => v.visitId !== visitId
+		    );
+		
+		    renderVisitsAndStats();
+		    filterMembers();
+		
+		    alert("سابقه با موفقیت حذف شد.");
+		}
         function clearMemberHistory() {
             if(confirm("آیا از حذف کل تاریخچه حضور این شخص اطمینان دارید؟")) {
                 const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
