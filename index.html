@@ -762,22 +762,103 @@
 		        return alert("سابقه حضور پیدا نشد.");
 		    }
 		
-		    const { data, error } = await supabaseClient
-		        .from('visits')
-		        .update({
-		            payment_status: 'paid'
-		        })
-		        .eq('id', visitId)
-		        .eq('member_id', member.id)
-		        .select()
-		        .single();
+		    const debtDescription = `بدهی جلسه ${visitId}`;
 		
-		    if (error) {
-		        console.error('خطا در تسویه بدهی:', error);
-		        return alert('تسویه بدهی در دیتابیس انجام نشد.');
+		    // پیدا کردن بدهی مربوط به این جلسه
+		    const { data: debt, error: debtFindError } =
+		        await supabaseClient
+		            .from('debts')
+		            .select('*')
+		            .eq('member_id', member.id)
+		            .eq('description', debtDescription)
+		            .eq('is_paid', false)
+		            .maybeSingle();
+		
+		    if (debtFindError) {
+		        console.error(
+		            'خطا در پیدا کردن بدهی:',
+		            debtFindError
+		        );
+		
+		        return alert(
+		            'خطا در پیدا کردن بدهی در دیتابیس.'
+		        );
 		    }
 		
-		    visit.paymentStatus = data.payment_status;
+		    if (!debt) {
+		        return alert(
+		            'بدهی مربوط به این جلسه در دیتابیس پیدا نشد.'
+		        );
+		    }
+		
+		    // ثبت پرداخت در جدول payments
+		    const { error: paymentError } =
+		        await supabaseClient
+		            .from('payments')
+		            .insert({
+		                member_id: member.id,
+		                amount: debt.amount,
+		                payment_method: 'cash',
+		                description: `تسویه بدهی جلسه ${visitId}`
+		            });
+		
+		    if (paymentError) {
+		        console.error(
+		            'خطا در ثبت پرداخت:',
+		            paymentError
+		        );
+		
+		        return alert(
+		            'ثبت پرداخت در دیتابیس انجام نشد.'
+		        );
+		    }
+		
+		    // علامت‌گذاری بدهی به عنوان تسویه‌شده
+		    const { error: debtUpdateError } =
+		        await supabaseClient
+		            .from('debts')
+		            .update({
+		                is_paid: true,
+		                paid_at: new Date().toISOString()
+		            })
+		            .eq('id', debt.id);
+		
+		    if (debtUpdateError) {
+		        console.error(
+		            'خطا در تسویه بدهی:',
+		            debtUpdateError
+		        );
+		
+		        return alert(
+		            'پرداخت ثبت شد، اما وضعیت بدهی به‌روزرسانی نشد.'
+		        );
+		    }
+		
+		    // به‌روزرسانی وضعیت جلسه
+		    const { data: updatedVisit, error: visitError } =
+		        await supabaseClient
+		            .from('visits')
+		            .update({
+		                payment_status: 'paid'
+		            })
+		            .eq('id', visitId)
+		            .eq('member_id', member.id)
+		            .select()
+		            .single();
+		
+		    if (visitError) {
+		        console.error(
+		            'خطا در به‌روزرسانی وضعیت جلسه:',
+		            visitError
+		        );
+		
+		        return alert(
+		            'بدهی تسویه شد، اما وضعیت جلسه به‌روزرسانی نشد.'
+		        );
+		    }
+		
+		    // به‌روزرسانی اطلاعات داخل برنامه
+		    visit.paymentStatus = updatedVisit.payment_status;
 		
 		    renderVisitsAndStats();
 		    filterMembers();
