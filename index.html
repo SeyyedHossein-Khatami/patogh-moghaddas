@@ -533,12 +533,21 @@
 		}
 
         function addGameField(visitId) {
-            const container = document.getElementById(`games_container_${visitId}`);
-            const input = document.createElement('input');
-            input.type = 'text'; input.className = `formal-input game-input-${visitId}`;
-            input.placeholder = "نام بازی بعدی..."; input.style.marginTop = "5px";
-            container.appendChild(input);
-        }
+		    const container = document.getElementById(`games_container_${visitId}`);
+		
+		    const select = document.createElement('select');
+		
+		    select.className = `formal-input game-input-${visitId}`;
+		
+		    select.innerHTML = `
+		        <option value="">انتخاب بازی...</option>
+		        ${gameCatalog.map(game => `
+		            <option value="${game.name}">${game.name}</option>
+		        `).join('')}
+		    `;
+		
+		    container.appendChild(select);
+		}
 
         async function completeCheckout(visitId) {
 		    const entryInput = document.getElementById(`entry_edit_${visitId}`).value;
@@ -990,7 +999,12 @@
                                 <label style="font-size:12px; color:gray; font-weight:bold;">ثبت جزئیات و تسویه (محاسبه خودکار):</label>
                                 
                                 <div id="games_container_${visit.visitId}" style="margin-top:10px;">
-                                    <input type="text" class="formal-input game-input-${visit.visitId}" placeholder="نام بازی اول...">
+                                    <select class="formal-input game-input-${visit.visitId}">
+									    <option value="">انتخاب بازی...</option>
+									    ${gameCatalog.map(game => `
+									        <option value="${game.name}">${game.name}</option>
+									    `).join('')}
+									</select>
                                 </div>
                                 <button class="btn-add-game" onclick="addGameField('${visit.visitId}')">+ ثبت یک بازی دیگر در این جلسه</button>
 
