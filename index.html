@@ -550,73 +550,70 @@
 		}
 
         async function completeCheckout(visitId) {
-		    const entryInput = document.getElementById(`entry_edit_${visitId}`).value;
-		    const exitInput = document.getElementById(`exit_${visitId}`).value;
-		    const paymentInput = document.getElementById(`payment_${visitId}`).value;
-		
-		    const gameInputs = document.querySelectorAll(`.game-input-${visitId}`);
-		
-		    let gamesArray = [];
-		
-		    gameInputs.forEach(input => {
-		        if (input.value.trim() !== '') {
-		            gamesArray.push(input.value.trim());
-		        }
-		    });
-		
-		    if (gamesArray.length === 0) {
-		        return alert("لطفاً حداقل یک بازی را وارد کنید.");
-		    }
-		
-		    if (!entryInput || !exitInput) {
-		        return alert("ساعت ورود و خروج الزامی است.");
-		    }
-		
-		    const memberIndex = members.findIndex(
+		    const member = members.find(
 		        m => m.id === currentActiveMemberId
 		    );
 		
-		    if (memberIndex === -1) {
+		    if (!member) {
 		        return alert("عضو پیدا نشد.");
 		    }
 		
-		    const member = members[memberIndex];
-		
-		    const visitIndex = member.visits.findIndex(
+		    const visit = member.visits.find(
 		        v => v.visitId === visitId
 		    );
 		
-		    if (visitIndex === -1) {
+		    if (!visit) {
 		        return alert("سابقه حضور پیدا نشد.");
 		    }
 		
-		    let [eH, eM] = entryInput.split(':').map(Number);
-		    let [xH, xM] = exitInput.split(':').map(Number);
+		    const gameInputs = document.querySelectorAll(
+		        `.game-input-${visitId}`
+		    );
 		
-		    let entryMins = eH * 60 + eM;
-		    let exitMins = xH * 60 + xM;
+		    const gamesArray = Array.from(gameInputs)
+		        .map(input => input.value.trim())
+		        .filter(value => value);
 		
-		    // اگر خروج مربوط به روز بعد باشد
+		    if (gamesArray.length === 0) {
+		        return alert("حداقل یک بازی را انتخاب کنید.");
+		    }
+		
+		    const entry = document.getElementById(`entry_${visitId}`).value;
+		    const exit = document.getElementById(`exit_${visitId}`).value;
+		    const paymentStatus = document.getElementById(`payment_${visitId}`).value;
+		
+		    if (!entry || !exit) {
+		        return alert("ساعت ورود و خروج را وارد کنید.");
+		    }
+		
+		    let [entryHour, entryMin] = entry.split(':').map(Number);
+		    let [exitHour, exitMin] = exit.split(':').map(Number);
+		
+		    let entryMins = entryHour * 60 + entryMin;
+		    let exitMins = exitHour * 60 + exitMin;
+		
 		    if (exitMins < entryMins) {
 		        exitMins += 24 * 60;
 		    }
 		
-		    const durationMins = exitMins - entryMins;
+		    const duration = exitMins - entryMins;
 		
-		    let ratePerHour =
-		        member.tier === 'gold'
-		            ? 20000
-		            : (member.tier === 'silver' ? 30000 : 50000);
+		    if (duration <= 0) {
+		        return alert("مدت حضور معتبر نیست.");
+		    }
 		
-		    let rawCost = durationMins * (ratePerHour / 60);
+		    let hourlyRate = 50000;
 		
-		    let finalCost = Math.round(rawCost / 500) * 500;
+		    if (member.tier === 'silver') {
+		        hourlyRate = 30000;
+		    } else if (member.tier === 'gold') {
+		        hourlyRate = 20000;
+		    }
 		
+		    const rawCost = (duration / 60) * hourlyRate;
+		    const finalCost = Math.round(rawCost / 500) * 500;
 		
-		    // ==========================================
-		    // 1. ثبت بازی‌ها در جدول games
-		    // ==========================================
-		
+		    // ثبت بازی‌ها در جدول games
 		    const gamesToInsert = gamesArray.map(gameName => ({
 		        member_id: member.id,
 		        game_type: gameName,
@@ -625,29 +622,26 @@
 		        description: `جلسه ${visitId}`
 		    }));
 		
-		    const { data: insertedGames, error: gamesError } = await supabaseClient
-		        .from('games')
-		        .insert(gamesToInsert)
-		        .select();
+		    const { data: insertedGames, error: gamesError } =
+		        await supabaseClient
+		            .from('games')
+		            .insert(gamesToInsert)
+		            .select();
 		
 		    if (gamesError) {
 		        console.error('خطا در ثبت بازی‌ها:', gamesError);
 		        return alert('ثبت بازی‌ها در دیتابیس انجام نشد.');
 		    }
 		
-		
-		    // ==========================================
-		    // 2. بروزرسانی جلسه در جدول visits
-		    // ==========================================
-		
+		    // پایان جلسه
 		    const { data, error } = await supabaseClient
 		        .from('visits')
 		        .update({
-		            entry_time: entryInput,
-		            exit_time: exitInput,
-		            duration: durationMins,
+		            entry_time: entry,
+		            exit_time: exit,
+		            duration: duration,
 		            amount: finalCost,
-		            payment_status: paymentInput,
+		            payment_status: paymentStatus,
 		            status: 'completed',
 		            games: gamesArray
 		        })
@@ -656,45 +650,57 @@
 		        .select()
 		        .single();
 		
-		
-		    // اگر ثبت visit شکست خورد، بازی‌هایی که همین الان ساخته‌ایم پاک شوند
 		    if (error) {
+		        console.error('خطا در پایان جلسه:', error);
 		
-		        console.error('خطا در ثبت خروج:', error);
-		
+		        // اگر ثبت جلسه شکست خورد، بازی‌های همین عملیات را حذف کن
 		        if (insertedGames && insertedGames.length > 0) {
-		
-		            const insertedGameIds = insertedGames.map(game => game.id);
-		
 		            await supabaseClient
 		                .from('games')
 		                .delete()
-		                .in('id', insertedGameIds);
+		                .in(
+		                    'id',
+		                    insertedGames.map(game => game.id)
+		                );
 		        }
 		
-		        return alert('ثبت خروج در دیتابیس انجام نشد.');
+		        return alert('ثبت پایان جلسه در دیتابیس انجام نشد.');
 		    }
 		
+		    // اگر پرداخت به صورت بدهی بود
+		    if (paymentStatus === 'debt') {
 		
-		    // ==========================================
-		    // 3. بروزرسانی اطلاعات داخل صفحه
-		    // ==========================================
+		        const { error: debtError } = await supabaseClient
+		            .from('debts')
+		            .insert({
+		                member_id: member.id,
+		                amount: finalCost,
+		                description: `بدهی جلسه ${visitId}`,
+		                is_paid: false
+		            });
 		
-		    member.visits[visitIndex] = {
-		        visitId: data.id,
-		        date: data.visit_date,
-		        entry: data.entry_time,
-		        exit: data.exit_time,
-		        duration: data.duration,
-		        status: data.status,
-		        games: data.games || [],
-		        cost: Number(data.amount) || 0,
-		        paymentStatus: data.payment_status || 'paid'
-		    };
+		        if (debtError) {
+		            console.error('خطا در ثبت بدهی:', debtError);
+		
+		            return alert(
+		                'جلسه ثبت شد، اما ثبت بدهی در دیتابیس انجام نشد.'
+		            );
+		        }
+		    }
+		
+		    // به‌روزرسانی اطلاعات داخل برنامه
+		    visit.entry = entry;
+		    visit.exit = exit;
+		    visit.duration = duration;
+		    visit.cost = finalCost;
+		    visit.paymentStatus = paymentStatus;
+		    visit.status = 'completed';
+		    visit.games = gamesArray;
 		
 		    renderVisitsAndStats();
+		    filterMembers();
 		
-		    alert(`خروج ثبت شد.\nمبلغ: ${finalCost.toLocaleString()} تومان`);
+		    alert("جلسه با موفقیت ثبت شد.");
 		}
 
         async function payDebt(visitId) {
