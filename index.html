@@ -586,7 +586,34 @@
 		
 		    let finalCost = Math.round(rawCost / 500) * 500;
 		
-		    // بروزرسانی در Supabase
+		
+		    // ==========================================
+		    // 1. ثبت بازی‌ها در جدول games
+		    // ==========================================
+		
+		    const gamesToInsert = gamesArray.map(gameName => ({
+		        member_id: member.id,
+		        game_type: gameName,
+		        amount: 0,
+		        played_at: new Date().toISOString(),
+		        description: `جلسه ${visitId}`
+		    }));
+		
+		    const { data: insertedGames, error: gamesError } = await supabaseClient
+		        .from('games')
+		        .insert(gamesToInsert)
+		        .select();
+		
+		    if (gamesError) {
+		        console.error('خطا در ثبت بازی‌ها:', gamesError);
+		        return alert('ثبت بازی‌ها در دیتابیس انجام نشد.');
+		    }
+		
+		
+		    // ==========================================
+		    // 2. بروزرسانی جلسه در جدول visits
+		    // ==========================================
+		
 		    const { data, error } = await supabaseClient
 		        .from('visits')
 		        .update({
@@ -603,12 +630,30 @@
 		        .select()
 		        .single();
 		
+		
+		    // اگر ثبت visit شکست خورد، بازی‌هایی که همین الان ساخته‌ایم پاک شوند
 		    if (error) {
+		
 		        console.error('خطا در ثبت خروج:', error);
+		
+		        if (insertedGames && insertedGames.length > 0) {
+		
+		            const insertedGameIds = insertedGames.map(game => game.id);
+		
+		            await supabaseClient
+		                .from('games')
+		                .delete()
+		                .in('id', insertedGameIds);
+		        }
+		
 		        return alert('ثبت خروج در دیتابیس انجام نشد.');
 		    }
 		
-		    // بروزرسانی اطلاعات داخل صفحه
+		
+		    // ==========================================
+		    // 3. بروزرسانی اطلاعات داخل صفحه
+		    // ==========================================
+		
 		    member.visits[visitIndex] = {
 		        visitId: data.id,
 		        date: data.visit_date,
