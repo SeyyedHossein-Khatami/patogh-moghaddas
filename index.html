@@ -578,9 +578,24 @@
 		        return alert("حداقل یک بازی را انتخاب کنید.");
 		    }
 		
-		    const entry = document.getElementById(`entry_${visitId}`).value;
-		    const exit = document.getElementById(`exit_${visitId}`).value;
-		    const paymentStatus = document.getElementById(`payment_${visitId}`).value;
+		    // دریافت اطلاعات فرم
+		    const entryElement = document.getElementById(`entry_edit_${visitId}`);
+		    const exitElement = document.getElementById(`exit_${visitId}`);
+		    const paymentElement = document.getElementById(`payment_${visitId}`);
+		
+		    if (!entryElement || !exitElement || !paymentElement) {
+		        console.error("عناصر فرم پیدا نشدند:", {
+		            entryElement,
+		            exitElement,
+		            paymentElement
+		        });
+		
+		        return alert("خطا در دریافت اطلاعات فرم جلسه.");
+		    }
+		
+		    const entry = entryElement.value;
+		    const exit = exitElement.value;
+		    const paymentStatus = paymentElement.value;
 		
 		    if (!entry || !exit) {
 		        return alert("ساعت ورود و خروج را وارد کنید.");
@@ -602,6 +617,7 @@
 		        return alert("مدت حضور معتبر نیست.");
 		    }
 		
+		    // محاسبه تعرفه
 		    let hourlyRate = 50000;
 		
 		    if (member.tier === 'silver') {
@@ -653,7 +669,7 @@
 		    if (error) {
 		        console.error('خطا در پایان جلسه:', error);
 		
-		        // اگر ثبت جلسه شکست خورد، بازی‌های همین عملیات را حذف کن
+		        // اگر پایان جلسه شکست خورد، بازی‌های ثبت‌شده را پاک کن
 		        if (insertedGames && insertedGames.length > 0) {
 		            await supabaseClient
 		                .from('games')
