@@ -626,14 +626,49 @@
 		    alert(`خروج ثبت شد.\nمبلغ: ${finalCost.toLocaleString()} تومان`);
 		}
 
-        function payDebt(visitId) {
-            if(confirm("آیا مبلغ بدهی این جلسه تسویه شد؟")) {
-                const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
-                const visitIndex = members[memberIndex].visits.findIndex(v => v.visitId === visitId);
-                members[memberIndex].visits[visitIndex].paymentStatus = 'paid';
-                saveData(); renderVisitsAndStats();
-            }
-        }
+        async function payDebt(visitId) {
+		    if (!confirm("آیا مبلغ بدهی این جلسه تسویه شد؟")) {
+		        return;
+		    }
+		
+		    const member = members.find(
+		        m => m.id === currentActiveMemberId
+		    );
+		
+		    if (!member) {
+		        return alert("عضو پیدا نشد.");
+		    }
+		
+		    const visit = member.visits.find(
+		        v => v.visitId === visitId
+		    );
+		
+		    if (!visit) {
+		        return alert("سابقه حضور پیدا نشد.");
+		    }
+		
+		    const { data, error } = await supabaseClient
+		        .from('visits')
+		        .update({
+		            payment_status: 'paid'
+		        })
+		        .eq('id', visitId)
+		        .eq('member_id', member.id)
+		        .select()
+		        .single();
+		
+		    if (error) {
+		        console.error('خطا در تسویه بدهی:', error);
+		        return alert('تسویه بدهی در دیتابیس انجام نشد.');
+		    }
+		
+		    visit.paymentStatus = data.payment_status;
+		
+		    renderVisitsAndStats();
+		    filterMembers();
+		
+		    alert("بدهی با موفقیت تسویه شد.");
+		}
 
         async function removeVisit(visitId) {
 		    if (!confirm("آیا این سابقه حذف شود؟")) {
