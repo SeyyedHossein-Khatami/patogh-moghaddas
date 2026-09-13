@@ -566,6 +566,7 @@
 		        return alert("سابقه حضور پیدا نشد.");
 		    }
 		
+		    // دریافت بازی‌ها
 		    const gameInputs = document.querySelectorAll(
 		        `.game-input-${visitId}`
 		    );
@@ -578,19 +579,31 @@
 		        return alert("حداقل یک بازی را انتخاب کنید.");
 		    }
 		
-		    // دریافت اطلاعات فرم
-		    const entryElement = document.getElementById(`entry_edit_${visitId}`);
-		    const exitElement = document.getElementById(`exit_${visitId}`);
-		    const paymentElement = document.getElementById(`payment_${visitId}`);
+		    // دریافت عناصر فرم
+		    const entryElement = document.getElementById(
+		        `entry_edit_${visitId}`
+		    );
 		
+		    const exitElement = document.getElementById(
+		        `exit_${visitId}`
+		    );
+		
+		    const paymentElement = document.getElementById(
+		        `payment_${visitId}`
+		    );
+		
+		    // بررسی اینکه عناصر واقعاً پیدا شده‌اند
 		    if (!entryElement || !exitElement || !paymentElement) {
 		        console.error("عناصر فرم پیدا نشدند:", {
+		            visitId,
 		            entryElement,
 		            exitElement,
 		            paymentElement
 		        });
 		
-		        return alert("خطا در دریافت اطلاعات فرم جلسه.");
+		        return alert(
+		            "خطا در دریافت اطلاعات جلسه. لطفاً صفحه را رفرش کنید."
+		        );
 		    }
 		
 		    const entry = entryElement.value;
@@ -601,12 +614,14 @@
 		        return alert("ساعت ورود و خروج را وارد کنید.");
 		    }
 		
+		    // تبدیل ساعت ورود و خروج به دقیقه
 		    let [entryHour, entryMin] = entry.split(':').map(Number);
 		    let [exitHour, exitMin] = exit.split(':').map(Number);
 		
 		    let entryMins = entryHour * 60 + entryMin;
 		    let exitMins = exitHour * 60 + exitMin;
 		
+		    // اگر جلسه از نیمه‌شب عبور کرده باشد
 		    if (exitMins < entryMins) {
 		        exitMins += 24 * 60;
 		    }
@@ -617,7 +632,7 @@
 		        return alert("مدت حضور معتبر نیست.");
 		    }
 		
-		    // محاسبه تعرفه
+		    // تعیین تعرفه
 		    let hourlyRate = 50000;
 		
 		    if (member.tier === 'silver') {
@@ -626,6 +641,7 @@
 		        hourlyRate = 20000;
 		    }
 		
+		    // محاسبه هزینه
 		    const rawCost = (duration / 60) * hourlyRate;
 		    const finalCost = Math.round(rawCost / 500) * 500;
 		
@@ -649,7 +665,7 @@
 		        return alert('ثبت بازی‌ها در دیتابیس انجام نشد.');
 		    }
 		
-		    // پایان جلسه
+		    // تکمیل جلسه در visits
 		    const { data, error } = await supabaseClient
 		        .from('visits')
 		        .update({
@@ -669,7 +685,7 @@
 		    if (error) {
 		        console.error('خطا در پایان جلسه:', error);
 		
-		        // اگر پایان جلسه شکست خورد، بازی‌های ثبت‌شده را پاک کن
+		        // اگر ثبت جلسه شکست خورد، بازی‌های ثبت‌شده را پاک کن
 		        if (insertedGames && insertedGames.length > 0) {
 		            await supabaseClient
 		                .from('games')
@@ -680,23 +696,29 @@
 		                );
 		        }
 		
-		        return alert('ثبت پایان جلسه در دیتابیس انجام نشد.');
+		        return alert(
+		            'ثبت پایان جلسه در دیتابیس انجام نشد.'
+		        );
 		    }
 		
 		    // اگر پرداخت به صورت بدهی بود
 		    if (paymentStatus === 'debt') {
 		
-		        const { error: debtError } = await supabaseClient
-		            .from('debts')
-		            .insert({
-		                member_id: member.id,
-		                amount: finalCost,
-		                description: `بدهی جلسه ${visitId}`,
-		                is_paid: false
-		            });
+		        const { error: debtError } =
+		            await supabaseClient
+		                .from('debts')
+		                .insert({
+		                    member_id: member.id,
+		                    amount: finalCost,
+		                    description: `بدهی جلسه ${visitId}`,
+		                    is_paid: false
+		                });
 		
 		        if (debtError) {
-		            console.error('خطا در ثبت بدهی:', debtError);
+		            console.error(
+		                'خطا در ثبت بدهی:',
+		                debtError
+		            );
 		
 		            return alert(
 		                'جلسه ثبت شد، اما ثبت بدهی در دیتابیس انجام نشد.'
