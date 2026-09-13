@@ -254,6 +254,7 @@
     <script>
         let members = [];
 	let currentActiveMemberId = null;
+	let gameCatalog = [];
 
 	const SUPABASE_URL = 'https://orhbwpuqcjwnietnepvh.supabase.co';
 	const SUPABASE_KEY = 'sb_publishable_rPylZEcBDLXPJFC30xJ_5g_82nbL0WZ';
@@ -306,6 +307,22 @@
 	                paymentStatus: visit.payment_status || 'paid'
 	            }))
 	    }));
+	}
+	async function loadGameCatalog() {
+	    const { data, error } = await supabaseClient
+	        .from('game_catalog')
+	        .select('id, name')
+	        .eq('is_active', true)
+	        .order('name', { ascending: true });
+	
+	    if (error) {
+	        console.error('خطا در دریافت لیست بازی‌ها:', error);
+	        alert('خطا در دریافت لیست بازی‌ها.');
+	        gameCatalog = [];
+	        return;
+	    }
+	
+	    gameCatalog = data || [];
 	}
 
  
@@ -1032,9 +1049,10 @@
         }
 
         async function initApp() {
-    		await loadData();
-    		renderList();
-	}
+		    await loadData();
+		    await loadGameCatalog();
+		    renderList();
+		}
 
 initApp();
     </script>
