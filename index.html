@@ -179,11 +179,68 @@
         <h1>سامانه یکپارچه پاتوق مقدس</h1>
         <p>مدیریت مشتریان و حسابداری کافه</p>
     </div>
-
+	
     <div class="container">
         <!-- دکمه داشبورد گزارشات جامع -->
         <button class="btn-dashboard" onclick="openGlobalReports()">📊 داشبورد و گزارشات جامع کافه</button>
+		<div class="game-management-box">
 
+		    <div
+		        onclick="toggleGameManagement()"
+		        style="
+		            display:flex;
+		            align-items:center;
+		            justify-content:space-between;
+		            cursor:pointer;
+		            padding:5px 0;
+		        "
+		    >
+		        <h3 style="margin:0;">
+		            🎮 مدیریت بازی‌ها
+		        </h3>
+		
+		        <span id="gameManagementArrow">▼</span>
+		    </div>
+		
+		    <div id="gameManagementContent" style="display:none; margin-top:15px;">
+		
+		        <div style="display:flex; gap:10px;">
+		            <input
+		                type="text"
+		                id="newGameName"
+		                placeholder="نام بازی جدید"
+		                style="
+		                    flex:1;
+		                    padding:10px;
+		                    border:1px solid #ccc;
+		                    border-radius:8px;
+		                    font-family:'Vazirmatn';
+		                "
+		            >
+		
+		            <button
+		                onclick="addGameToCatalog()"
+		                style="
+		                    padding:10px 18px;
+		                    border:none;
+		                    border-radius:8px;
+		                    cursor:pointer;
+		                "
+		            >
+		                ➕ افزودن
+		            </button>
+		        </div>
+		
+		        <div
+		            id="gameCatalogList"
+		            style="margin-top:15px;"
+		        >
+		            در حال دریافت لیست بازی‌ها...
+		        </div>
+		
+		    </div>
+		
+		</div>
         <div class="control-panel">
             <div class="input-row">
                 <input type="text" id="newName" class="formal-input" placeholder="نام عضو جدید...">
@@ -206,25 +263,7 @@
 
         <button class="btn-global-clear" onclick="clearAllSystemHistory()">⚠️ پاکسازی تاریخچه و سوابق کل اعضای سیستم</button>
     </div>
-	<div class="game-management-box">
-		<h3>🎮 مدیریت بازی‌ها</h3>
 	
-		<div style="display:flex; gap:10px; margin-top:10px;">
-			<input
-				type="text"
-				id="newGameName"
-				placeholder="نام بازی جدید"
-				style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; font-family:'Vazirmatn';"
-			>
-	
-			<button
-				onclick="addGameToCatalog()"
-				style="padding:10px 18px; border:none; border-radius:8px; cursor:pointer;"
-			>
-				➕ افزودن بازی
-			</button>
-		</div>
-	</div>
     <!-- پاپ آپ پرونده شخصی -->
     <div class="modal-overlay" id="visitModal" onclick="closeModal(event, 'visitModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -333,19 +372,76 @@
 	async function loadGameCatalog() {
 	    const { data, error } = await supabaseClient
 	        .from('game_catalog')
-	        .select('id, name')
-	        .eq('is_active', true)
+	        .select('id, name, is_active')
 	        .order('name', { ascending: true });
 	
 	    if (error) {
 	        console.error('خطا در دریافت لیست بازی‌ها:', error);
-	        alert('خطا در دریافت لیست بازی‌ها.');
-	        gameCatalog = [];
+	
+	        const container = document.getElementById('gameCatalogList');
+	
+	        if (container) {
+	            container.innerHTML = 'خطا در دریافت لیست بازی‌ها.';
+	        }
+	
 	        return;
 	    }
 	
 	    gameCatalog = data || [];
+	
+	    renderGameCatalog();
 	}
+		function renderGameCatalog() {
+
+		    const container = document.getElementById('gameCatalogList');
+		
+		    if (!container) return;
+		
+		    if (gameCatalog.length === 0) {
+		        container.innerHTML = `
+		            <div style="
+		                padding:15px;
+		                text-align:center;
+		                color:#777;
+		            ">
+		                هنوز هیچ بازی‌ای ثبت نشده است.
+		            </div>
+		        `;
+		        return;
+		    }
+		
+		    container.innerHTML = gameCatalog.map(game => `
+		        <div style="
+		            display:flex;
+		            align-items:center;
+		            justify-content:space-between;
+		            padding:10px;
+		            margin-bottom:8px;
+		            border:1px solid #ddd;
+		            border-radius:8px;
+		            background:#f8f9fa;
+		        ">
+		
+		            <span style="font-weight:bold;">
+		                🎮 ${game.name}
+		            </span>
+		
+		            <button
+		                onclick="toggleGameStatus('${game.id}')"
+		                style="
+		                    border:none;
+		                    border-radius:6px;
+		                    padding:6px 10px;
+		                    cursor:pointer;
+		                    background:${game.is_active ? '#ffe5e5' : '#e5f7e5'};
+		                "
+		            >
+		                ${game.is_active ? '🔴 غیرفعال کردن' : '🟢 فعال کردن'}
+		            </button>
+		
+		        </div>
+		    `).join('');
+		}
 
  
         function saveData() { localStorage.setItem('patoghSystemData', JSON.stringify(members)); }
@@ -1314,6 +1410,51 @@
 		    input.value = "";
 		
 		    alert(`بازی «${data.name}» با موفقیت اضافه شد.`);
+		}
+		function toggleGameManagement() {
+		    const content = document.getElementById('gameManagementContent');
+		    const arrow = document.getElementById('gameManagementArrow');
+		
+		    if (!content) return;
+		
+		    if (content.style.display === 'none') {
+		        content.style.display = 'block';
+		        arrow.innerText = '▲';
+		    } else {
+		        content.style.display = 'none';
+		        arrow.innerText = '▼';
+		    }
+		}
+		async function toggleGameStatus(gameId) {
+		    const game = gameCatalog.find(g => g.id === gameId);
+		
+		    if (!game) {
+		        return alert("بازی پیدا نشد.");
+		    }
+		
+		    const newStatus = !game.is_active;
+		
+		    const { data, error } = await supabaseClient
+		        .from('game_catalog')
+		        .update({
+		            is_active: newStatus
+		        })
+		        .eq('id', gameId)
+		        .select()
+		        .single();
+		
+		    if (error) {
+		        console.error("خطا در تغییر وضعیت بازی:", error);
+		        return alert("تغییر وضعیت بازی انجام نشد.");
+		    }
+		
+		    game.is_active = data.is_active;
+		
+		    renderGameCatalog();
+		
+		    // اگر بازی غیرفعال شد، لیست بازی‌های قابل انتخاب
+		    // در فرم ثبت جلسه هم دوباره از دیتابیس خوانده شود.
+		    await loadGameCatalog();
 		}
         async function initApp() {
 		    await loadData();
