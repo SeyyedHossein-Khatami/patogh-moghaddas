@@ -920,24 +920,22 @@
 		        return alert("عضو پیدا نشد.");
 		    }
 		
-		    // حذف تمام جلسات این عضو از Supabase
-		    const { error } = await supabaseClient
+		    const { data, error } = await supabaseClient
 		        .from('visits')
 		        .delete()
-		        .eq('member_id', member.id);
+		        .eq('member_id', member.id)
+		        .select();
 		
 		    if (error) {
-		        console.error(
-		            'خطا در حذف تاریخچه عضو:',
-		            error
-		        );
+		        console.error("خطا در حذف تاریخچه عضو:", error);
 		
 		        return alert(
-		            'حذف تاریخچه از دیتابیس انجام نشد.'
+		            "حذف تاریخچه از دیتابیس انجام نشد."
 		        );
 		    }
 		
-		    // حذف اطلاعات داخل برنامه
+		    console.log("جلسات حذف‌شده:", data);
+		
 		    member.visits = [];
 		
 		    renderVisitsAndStats();
