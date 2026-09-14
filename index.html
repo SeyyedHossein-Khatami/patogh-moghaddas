@@ -907,13 +907,44 @@
 		
 		    alert("سابقه با موفقیت حذف شد.");
 		}
-        function clearMemberHistory() {
-            if(confirm("آیا از حذف کل تاریخچه حضور این شخص اطمینان دارید؟")) {
-                const memberIndex = members.findIndex(m => m.id === currentActiveMemberId);
-                members[memberIndex].visits = [];
-                saveData(); renderVisitsAndStats();
-            }
-        }
+        async function clearMemberHistory() {
+		    if (!confirm("آیا از حذف کل تاریخچه حضور این شخص اطمینان دارید؟")) {
+		        return;
+		    }
+		
+		    const member = members.find(
+		        m => m.id === currentActiveMemberId
+		    );
+		
+		    if (!member) {
+		        return alert("عضو پیدا نشد.");
+		    }
+		
+		    // حذف تمام جلسات این عضو از Supabase
+		    const { error } = await supabaseClient
+		        .from('visits')
+		        .delete()
+		        .eq('member_id', member.id);
+		
+		    if (error) {
+		        console.error(
+		            'خطا در حذف تاریخچه عضو:',
+		            error
+		        );
+		
+		        return alert(
+		            'حذف تاریخچه از دیتابیس انجام نشد.'
+		        );
+		    }
+		
+		    // حذف اطلاعات داخل برنامه
+		    member.visits = [];
+		
+		    renderVisitsAndStats();
+		    filterMembers();
+		
+		    alert("کل تاریخچه حضور این عضو با موفقیت پاک شد.");
+		}
         
         function clearAllSystemHistory() {
             if(confirm("⚠️ آیا می‌خواهید گزارشات حضور تمام اعضای کافه را پاک کنید؟")) {
