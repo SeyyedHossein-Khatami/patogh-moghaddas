@@ -206,7 +206,25 @@
 
         <button class="btn-global-clear" onclick="clearAllSystemHistory()">⚠️ پاکسازی تاریخچه و سوابق کل اعضای سیستم</button>
     </div>
-
+	<div class="game-management-box">
+		<h3>🎮 مدیریت بازی‌ها</h3>
+	
+		<div style="display:flex; gap:10px; margin-top:10px;">
+			<input
+				type="text"
+				id="newGameName"
+				placeholder="نام بازی جدید"
+				style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; font-family:'Vazirmatn';"
+			>
+	
+			<button
+				onclick="addGameToCatalog()"
+				style="padding:10px 18px; border:none; border-radius:8px; cursor:pointer;"
+			>
+				➕ افزودن بازی
+			</button>
+		</div>
+	</div>
     <!-- پاپ آپ پرونده شخصی -->
     <div class="modal-overlay" id="visitModal" onclick="closeModal(event, 'visitModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -238,25 +256,6 @@
                 <h3 style="font-size: 14px; color: var(--lapis-lazuli); margin: 0;">📋 پرونده‌های باز و تاریخچه</h3>
                 <button class="btn-danger-outline" onclick="clearMemberHistory()">🗑️ حذف کل تاریخچه</button>
             </div>
-            <div class="game-management-box">
-			    <h3>🎮 مدیریت بازی‌ها</h3>
-			
-			    <div style="display:flex; gap:10px; margin-top:10px;">
-			        <input
-			            type="text"
-			            id="newGameName"
-			            placeholder="نام بازی جدید"
-			            style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; font-family:'Vazirmatn';"
-			        >
-			
-			        <button
-			            onclick="addGameToCatalog()"
-			            style="padding:10px 18px; border:none; border-radius:8px; cursor:pointer;"
-			        >
-			            ➕ افزودن بازی
-			        </button>
-			    </div>
-			</div>
             <div class="history-list" id="historyList" style="margin-top: 10px;"></div>
         </div>
     </div>
