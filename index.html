@@ -173,7 +173,86 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
+	<div id="loginScreen" style="
+	    display:none;
+	    position:fixed;
+	    inset:0;
+	    background:#f5f6fa;
+	    z-index:99999;
+	    align-items:center;
+	    justify-content:center;
+	">
+	
+	    <div style="
+	        width:90%;
+	        max-width:400px;
+	        background:white;
+	        padding:30px;
+	        border-radius:15px;
+	        box-shadow:0 5px 25px rgba(0,0,0,0.15);
+	        text-align:center;
+	    ">
+	
+	        <h2 style="margin-bottom:25px;">
+	            🔐 ورود به پنل مدیریت
+	        </h2>
+	
+	        <input
+	            type="email"
+	            id="loginEmail"
+	            placeholder="ایمیل"
+	            style="
+	                width:100%;
+	                box-sizing:border-box;
+	                padding:12px;
+	                margin-bottom:12px;
+	                border:1px solid #ccc;
+	                border-radius:8px;
+	                font-family:'Vazirmatn';
+	            "
+	        >
+	
+	        <input
+	            type="password"
+	            id="loginPassword"
+	            placeholder="رمز عبور"
+	            style="
+	                width:100%;
+	                box-sizing:border-box;
+	                padding:12px;
+	                margin-bottom:15px;
+	                border:1px solid #ccc;
+	                border-radius:8px;
+	                font-family:'Vazirmatn';
+	            "
+	        >
+	
+	        <button
+	            onclick="loginUser()"
+	            style="
+	                width:100%;
+	                padding:12px;
+	                border:none;
+	                border-radius:8px;
+	                cursor:pointer;
+	                font-family:'Vazirmatn';
+	                font-weight:bold;
+	            "
+	        >
+	            ورود
+	        </button>
+	
+	        <div
+	            id="loginError"
+	            style="
+	                color:#e74c3c;
+	                margin-top:15px;
+	                font-size:13px;
+	            "
+	        ></div>
+	
+	    </div>
+	</div>
     <div class="header-panel">
         <h1>﷽</h1>
         <h1>سامانه یکپارچه پاتوق مقدس</h1>
@@ -1463,13 +1542,57 @@
 		    // در فرم ثبت جلسه هم دوباره از دیتابیس خوانده شود.
 		    await loadGameCatalog();
 		}
+		async function loginUser() {
+
+		    const email = document.getElementById('loginEmail').value.trim();
+		    const password = document.getElementById('loginPassword').value;
+		
+		    const errorBox = document.getElementById('loginError');
+		
+		    errorBox.innerText = "";
+		
+		    if (!email || !password) {
+		        errorBox.innerText = "ایمیل و رمز عبور را وارد کنید.";
+		        return;
+		    }
+		
+		    const { error } = await supabaseClient.auth.signInWithPassword({
+		        email: email,
+		        password: password
+		    });
+		
+		    if (error) {
+		        console.error("خطا در ورود:", error);
+		        errorBox.innerText = "ایمیل یا رمز عبور اشتباه است.";
+		        return;
+		    }
+		
+		    document.getElementById('loginScreen').style.display = 'none';
+		
+		    await initApp();
+		}
+		async function checkLogin() {
+
+		    const { data } = await supabaseClient.auth.getSession();
+		
+		    const loginScreen = document.getElementById('loginScreen');
+		
+		    if (!data.session) {
+		        loginScreen.style.display = 'flex';
+		        return;
+		    }
+		
+		    loginScreen.style.display = 'none';
+		
+		    await initApp();
+		}
         async function initApp() {
 		    await loadData();
 		    await loadGameCatalog();
 		    renderList();
 		}
 
-initApp();
+checkLogin();
     </script>
 </body>
 </html>
