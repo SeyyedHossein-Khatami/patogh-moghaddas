@@ -22,6 +22,7 @@
         :root {
             --lapis-lazuli: #0c2c5c; --turquoise: #0f7b8e; --bg-color: #f4f7f6;
             --text-dark: #1c2833; --text-light: #566573;
+            --beheshti-classic: #f05454; --beheshti-bg: #b8001f;
             --gold-classic: #c5a059; --gold-bg: #fdfaf2;
             --silver-classic: #7f8c8d; --silver-bg: #f7f9f9;
             --normal-classic: #34495e; --normal-bg: #ffffff;
@@ -85,6 +86,7 @@
             box-shadow: var(--shadow-formal); display: flex; justify-content: space-between; align-items: center;
             border-right: 5px solid transparent; overflow: hidden;
         }
+        .card-beheshti { border-right-color: var(--beheshti-classic); background-color: var(--beheshti-bg); }
         .card-gold { border-right-color: var(--gold-classic); background-color: var(--gold-bg); }
         .card-silver { border-right-color: var(--silver-classic); background-color: var(--silver-bg); }
         .card-normal { border-right-color: var(--normal-classic); background-color: var(--normal-bg); }
@@ -93,6 +95,7 @@
         .member-name { font-weight: 700; color: var(--lapis-lazuli); font-size: 16px; margin-bottom: 6px; }
         .member-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; width: fit-content; border: 1px solid; }
         
+        .card-beheshti .member-badge { background-color: #fdf2d6; color: var(--beheshti-classic); border-color: #f5deaa; }
         .card-gold .member-badge { background-color: #fdf2d6; color: var(--gold-classic); border-color: #f5deaa; }
         .card-silver .member-badge { background-color: #eaeded; color: var(--silver-classic); border-color: #d5dbdb; }
         .card-normal .member-badge { background-color: #f2f3f4; color: #34495e; border-color: #bdc3c7; }
@@ -188,6 +191,7 @@
                     <option value="normal">عضو عادی (ساعتی ۵۰ت)</option>
                     <option value="silver">کارت نقره‌ای (ساعتی ۳۰ت)</option>
                     <option value="gold">کارت طلایی (ساعتی ۲۰ت)</option>
+                    <option value="beheshti">کارت بهشتی (ساعتی ۲۰ت)</option>
                 </select>
             </div>
             <button class="btn-primary" onclick="addMember()">➕ ثبت عضو جدید در سیستم</button>
@@ -216,6 +220,7 @@
                 <span style="font-size: 13px; font-weight: bold; color: var(--lapis-lazuli);">سطح کاربری:</span>
                 <select id="changeTierSelect" onchange="updateMemberTier(this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid #bdc3c7; font-family: 'Vazirmatn'; font-size: 13px; outline: none; background: #f8f9fa;">
                     <option value="gold">کارت طلایی</option>
+                    <option value="beheshti">کارت بهشتی</option>
                     <option value="silver">کارت نقره‌ای</option>
                     <option value="normal">عضو عادی</option>
                 </select>
@@ -335,8 +340,8 @@
 
             members.forEach(member => {
                 if (member.name.includes(searchVal)) {
-                    const tierLabel = member.tier === 'gold' ? 'کارت طلایی' : (member.tier === 'silver' ? 'کارت نقره‌ای' : 'عضو عادی');
-                    const cssClass = member.tier === 'gold' ? 'card-gold' : (member.tier === 'silver' ? 'card-silver' : 'card-normal');
+                    const tierLabel = member.tier === 'beheshti' ? 'کارت بهشتی' : (member.tier === 'gold' ? 'کارت طلایی' : (member.tier === 'silver' ? 'کارت نقره‌ای' : 'عضو عادی'));
+                    const cssClass = member.tier === 'beheshti' ? 'card-beheshti' : (member.tier === 'gold' ? 'card-gold' : (member.tier === 'silver' ? 'card-silver' : 'card-normal'));
                     
                     let hasActiveGame = member.visits.some(v => v.status === 'playing');
                     let activeLabel = hasActiveGame ? `<div class="active-status">⏳ داخل کافه</div>` : '';
@@ -639,6 +644,8 @@
 		        hourlyRate = 30000;
 		    } else if (member.tier === 'gold') {
 		        hourlyRate = 20000;
+		    } else if (member.tier === 'beheshti') {
+		        hourlyRate = 0;
 		    }
 		
 		    // محاسبه هزینه
@@ -987,9 +994,9 @@
             
             let totalVisits = 0;
             let gamesCount = {};
-            let revAllTime = { total: 0, gold: 0, silver: 0, normal: 0 };
-            let revCurrentYear = { total: 0, gold: 0, silver: 0, normal: 0 };
-            let revCurrentMonth = { total: 0, gold: 0, silver: 0, normal: 0 };
+            let revAllTime = { total: 0, beheshti: 0, gold: 0, silver: 0, normal: 0 };
+            let revCurrentYear = { total: 0, beheshti: 0, gold: 0, silver: 0, normal: 0 };
+            let revCurrentMonth = { total: 0, beheshti: 0, gold: 0, silver: 0, normal: 0 };
             
             let topMembersArr = [];
 
@@ -1080,6 +1087,7 @@
                         <div style="font-size:12px; font-weight:bold; color:gray; text-align:center; margin-bottom:5px;">درآمد ماه جاری (${currentMonth})</div>
                         <div class="rev-total">${fM(revCurrentMonth.total)} تومان</div>
                         <div style="text-align:center;">
+						     <span class="tier-rev tr-g">بهشتی: ${fM(revCurrentMonth.beheshti)}</span>
                             <span class="tier-rev tr-g">طلایی: ${fM(revCurrentMonth.gold)}</span>
                             <span class="tier-rev tr-s">نقره ای: ${fM(revCurrentMonth.silver)}</span>
                             <span class="tier-rev tr-n">عادی: ${fM(revCurrentMonth.normal)}</span>
@@ -1091,6 +1099,7 @@
                         <div style="font-size:12px; font-weight:bold; color:gray; text-align:center; margin-bottom:5px;">درآمد سال جاری (${currentYear})</div>
                         <div class="rev-total" style="color:#2980b9;">${fM(revCurrentYear.total)} تومان</div>
                         <div style="text-align:center;">
+                            <span class="tier-rev tr-g">بهشتی: ${fM(revCurrentYear.beheshti)}</span>
                             <span class="tier-rev tr-g">طلایی: ${fM(revCurrentYear.gold)}</span>
                             <span class="tier-rev tr-s">نقره ای: ${fM(revCurrentYear.silver)}</span>
                             <span class="tier-rev tr-n">عادی: ${fM(revCurrentYear.normal)}</span>
@@ -1102,6 +1111,7 @@
                         <div style="font-size:12px; font-weight:bold; color:gray; text-align:center; margin-bottom:5px;">مجموع درآمد کل سیستم (تا کنون)</div>
                         <div class="rev-total" style="color:#8e44ad;">${fM(revAllTime.total)} تومان</div>
                         <div style="text-align:center;">
+                            <span class="tier-rev tr-g">بهشتی: ${fM(revAllTime.beheshti)}</span>
                             <span class="tier-rev tr-g">طلایی: ${fM(revAllTime.gold)}</span>
                             <span class="tier-rev tr-s">نقره ای: ${fM(revAllTime.silver)}</span>
                             <span class="tier-rev tr-n">عادی: ${fM(revAllTime.normal)}</span>
@@ -1167,7 +1177,7 @@
 
             const now = new Date();
             const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            const tariffText = member.tier === 'gold' ? 'ساعتی ۲۰,۰۰۰ تومان' : (member.tier === 'silver' ? 'ساعتی ۳۰,۰۰۰ تومان' : 'ساعتی ۵۰,۰۰۰ تومان');
+            const tariffText = member.tier === 'beheshti' ? 'رایگان' : (member.tier === 'gold' ? 'ساعتی ۲۰,۰۰۰ تومان' : (member.tier === 'silver' ? 'ساعتی ۳۰,۰۰۰ تومان' : 'ساعتی ۵۰,۰۰۰ تومان'));
 
             member.visits.forEach(visit => {
                 if(visit.status === 'playing' || !visit.status) {
