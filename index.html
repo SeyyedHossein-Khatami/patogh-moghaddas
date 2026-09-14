@@ -238,7 +238,25 @@
                 <h3 style="font-size: 14px; color: var(--lapis-lazuli); margin: 0;">📋 پرونده‌های باز و تاریخچه</h3>
                 <button class="btn-danger-outline" onclick="clearMemberHistory()">🗑️ حذف کل تاریخچه</button>
             </div>
-            
+            <div class="game-management-box">
+			    <h3>🎮 مدیریت بازی‌ها</h3>
+			
+			    <div style="display:flex; gap:10px; margin-top:10px;">
+			        <input
+			            type="text"
+			            id="newGameName"
+			            placeholder="نام بازی جدید"
+			            style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; font-family:'Vazirmatn';"
+			        >
+			
+			        <button
+			            onclick="addGameToCatalog()"
+			            style="padding:10px 18px; border:none; border-radius:8px; cursor:pointer;"
+			        >
+			            ➕ افزودن بازی
+			        </button>
+			    </div>
+			</div>
             <div class="history-list" id="historyList" style="margin-top: 10px;"></div>
         </div>
     </div>
@@ -1260,7 +1278,44 @@
                 }
             });
         }
-
+		async function addGameToCatalog() {
+		    const input = document.getElementById('newGameName');
+		
+		    if (!input) {
+		        return alert("فیلد نام بازی پیدا نشد.");
+		    }
+		
+		    const gameName = input.value.trim();
+		
+		    if (!gameName) {
+		        return alert("نام بازی را وارد کنید.");
+		    }
+		
+		    const { data, error } = await supabaseClient
+		        .from('game_catalog')
+		        .insert({
+		            name: gameName,
+		            is_active: true
+		        })
+		        .select()
+		        .single();
+		
+		    if (error) {
+		        console.error("خطا در افزودن بازی:", error);
+		
+		        if (error.code === '23505') {
+		            return alert("این بازی قبلاً در لیست وجود دارد.");
+		        }
+		
+		        return alert("افزودن بازی به دیتابیس انجام نشد.");
+		    }
+		
+		    gameCatalog.push(data);
+		
+		    input.value = "";
+		
+		    alert(`بازی «${data.name}» با موفقیت اضافه شد.`);
+		}
         async function initApp() {
 		    await loadData();
 		    await loadGameCatalog();
