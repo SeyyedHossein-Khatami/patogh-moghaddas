@@ -660,19 +660,18 @@
         function addGameField(visitId) {
 		    const container = document.getElementById(`games_container_${visitId}`);
 		
+		    if (!container) {
+		        return;
+		    }
+		
 		    const select = document.createElement('select');
 		
 		    select.className = `formal-input game-input-${visitId}`;
 		
-		    select.innerHTML = `
-		        <option value="">انتخاب بازی...</option>
-		        ${gameCatalog.map(game => `
-		            <option value="${game.name}">${game.name}</option>
-		        `).join('')}
-		    `;
+		    select.innerHTML = getActiveGameOptions();
 		
 		    container.appendChild(select);
-		}
+}
 
         async function completeCheckout(visitId) {
 		    const member = members.find(
@@ -1248,6 +1247,17 @@
             document.getElementById('reportsModal').style.display = 'flex';
         }
 
+		function getActiveGameOptions() {
+		    return `
+		        <option value="">انتخاب بازی...</option>
+		        ${gameCatalog
+		            .filter(game => game.is_active)
+		            .map(game => `
+		                <option value="${game.name}">${game.name}</option>
+		            `)
+		            .join('')}
+		    `;
+		}
         // --- بخش رندر پرونده شخصی ---
         function renderVisitsAndStats() {
             const member = members.find(m => m.id === currentActiveMemberId);
@@ -1312,10 +1322,7 @@
                                 
                                 <div id="games_container_${visit.visitId}" style="margin-top:10px;">
                                     <select class="formal-input game-input-${visit.visitId}">
-									    <option value="">انتخاب بازی...</option>
-									    ${gameCatalog.map(game => `
-									        <option value="${game.name}">${game.name}</option>
-									    `).join('')}
+									    ${getActiveGameOptions()}
 									</select>
                                 </div>
                                 <button class="btn-add-game" onclick="addGameField('${visit.visitId}')">+ ثبت یک بازی دیگر در این جلسه</button>
