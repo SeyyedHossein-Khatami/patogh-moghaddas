@@ -258,7 +258,22 @@
         <h1>سامانه یکپارچه پاتوق مقدس</h1>
         <p>مدیریت مشتریان و حسابداری کافه</p>
     </div>
-	
+	<button
+	    onclick="logoutUser()"
+	    style="
+	        background:#e74c3c;
+	        color:white;
+	        border:none;
+	        padding:10px 18px;
+	        border-radius:8px;
+	        cursor:pointer;
+	        font-family:'Vazirmatn';
+	        font-weight:bold;
+	        margin-bottom:15px;
+	    "
+	>
+	    🚪 خروج از مدیریت
+	</button>
     <div class="container">
         <!-- دکمه داشبورد گزارشات جامع -->
         <button class="btn-dashboard" onclick="openGlobalReports()">📊 داشبورد و گزارشات جامع کافه</button>
@@ -1585,6 +1600,23 @@
 		    loginScreen.style.display = 'none';
 		
 		    await initApp();
+		}
+		async function logoutUser() {
+
+		    const confirmLogout = confirm("آیا می‌خواهید از پنل مدیریت خارج شوید؟");
+		
+		    if (!confirmLogout) {
+		        return;
+		    }
+		
+		    const { error } = await supabaseClient.auth.signOut();
+		
+		    if (error) {
+		        console.error("خطا در خروج:", error);
+		        return alert("خروج انجام نشد.");
+		    }
+		
+		    location.reload();
 		}
         async function initApp() {
 		    await loadData();
