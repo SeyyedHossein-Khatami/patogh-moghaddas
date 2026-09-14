@@ -944,14 +944,42 @@
 		    alert("کل تاریخچه حضور این عضو با موفقیت پاک شد.");
 		}
         
-        function clearAllSystemHistory() {
-            if(confirm("⚠️ آیا می‌خواهید گزارشات حضور تمام اعضای کافه را پاک کنید؟")) {
-                if(confirm("عمل غیرقابل بازگشت است! مطمئنید؟")) {
-                    members.forEach(m => m.visits = []);
-                    saveData(); filterMembers(); alert("پاکسازی شد.");
-                }
-            }
-        }
+        async function clearAllSystemHistory() {
+		    if (!confirm("⚠️ آیا می‌خواهید گزارشات حضور تمام اعضای کافه را پاک کنید؟")) {
+		        return;
+		    }
+		
+		    if (!confirm("عمل غیرقابل بازگشت است! مطمئنید؟")) {
+		        return;
+		    }
+		
+		    const { data, error } = await supabaseClient
+		        .from('visits')
+		        .delete()
+		        .neq('id', '00000000-0000-0000-0000-000000000000')
+		        .select();
+		
+		    if (error) {
+		        console.error(
+		            "خطا در حذف کل تاریخچه:",
+		            error
+		        );
+		
+		        return alert(
+		            "حذف تاریخچه از دیتابیس انجام نشد."
+		        );
+		    }
+		
+		    console.log("جلسات حذف‌شده:", data);
+		
+		    members.forEach(member => {
+		        member.visits = [];
+		    });
+		
+		    filterMembers();
+		
+		    alert("کل تاریخچه حضور کافه با موفقیت پاک شد.");
+		}
 
         // --- بخش تولید گزارشات جامع ---
         function openGlobalReports() {
