@@ -2692,22 +2692,34 @@
 		}
 
 		function formatPersianDate(dateValue) {
-
 		    if (!dateValue) {
 		        return 'ثبت نشده';
 		    }
 		
-		    const date = new Date(dateValue + 'T00:00:00');
+		    // تاریخ ذخیره‌شده در دیتابیس به شکل YYYY-MM-DD است
+		    const parts = dateValue.split('-');
 		
-		    if (isNaN(date.getTime())) {
+		    if (parts.length !== 3) {
 		        return 'تاریخ نامعتبر';
 		    }
 		
-		    return date.toLocaleDateString('fa-IR', {
-		        year: 'numeric',
-		        month: '2-digit',
-		        day: '2-digit'
-		    });
+		    const gy = Number(parts[0]);
+		    const gm = Number(parts[1]);
+		    const gd = Number(parts[2]);
+		
+		    if (!gy || !gm || !gd) {
+		        return 'تاریخ نامعتبر';
+		    }
+		
+		    try {
+		        const jalali = jalaali.toJalaali(gy, gm, gd);
+		
+		        return `${String(jalali.jy).padStart(4, '0')}/${String(jalali.jm).padStart(2, '0')}/${String(jalali.jd).padStart(2, '0')}`;
+		
+		    } catch (error) {
+		        console.error('خطا در تبدیل تاریخ تولد:', error);
+		        return 'تاریخ نامعتبر';
+		    }
 		}
         async function initApp() {
 		    await loadData();
