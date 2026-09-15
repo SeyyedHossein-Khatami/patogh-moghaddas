@@ -418,7 +418,61 @@
                 <h2 class="modal-title" id="modalMemberName">نام شخص</h2>
                 <button class="close-btn" onclick="closeModal(true, 'visitModal')">×</button>
             </div>
-
+			<!-- اطلاعات شخصی عضو -->
+			<div
+			    style="
+			        margin:15px 0;
+			        padding:15px;
+			        border:1px solid #e5e8e8;
+			        border-radius:10px;
+			        background:#f8f9fa;
+			    "
+			>
+			
+			    <div style="
+			        display:flex;
+			        justify-content:space-between;
+			        align-items:center;
+			        margin-bottom:12px;
+			    ">
+			        <h3 style="
+			            margin:0;
+			            font-size:14px;
+			            color:var(--lapis-lazuli);
+			        ">
+			            👤 اطلاعات شخصی
+			        </h3>
+			
+			        <button
+			            onclick="editMemberInfo()"
+			            style="
+			                border:1px solid #3498db;
+			                background:white;
+			                color:#3498db;
+			                border-radius:6px;
+			                padding:5px 10px;
+			                cursor:pointer;
+			                font-family:'Vazirmatn';
+			                font-size:11px;
+			            "
+			        >
+			            ✏️ ویرایش
+			        </button>
+			    </div>
+			
+			    <div
+			        id="memberPersonalInfo"
+			        style="
+			            display:grid;
+			            grid-template-columns:repeat(2, 1fr);
+			            gap:10px;
+			            font-size:12px;
+			        "
+			    >
+			        <!-- اطلاعات اینجا نمایش داده می‌شود -->
+			    </div>
+			
+			</div>
             <!-- بخش تغییر سطح کاربری -->
             <div class="tier-changer-box">
                 <span style="font-size: 13px; font-weight: bold; color: var(--lapis-lazuli);">سطح کاربری:</span>
@@ -739,13 +793,27 @@
 	}
 
         function openModal(id) {
-            currentActiveMemberId = id;
-            const member = members.find(m => m.id === id);
-            document.getElementById('modalMemberName').innerText = `پرونده: ${member.name}`;
-            document.getElementById('changeTierSelect').value = member.tier;
-            renderVisitsAndStats();
-            document.getElementById('visitModal').style.display = 'flex';
-        }
+
+		    currentActiveMemberId = id;
+		
+		    const member = members.find(m => m.id === id);
+		
+		    if (!member) {
+		        return alert("عضو پیدا نشد.");
+		    }
+		
+		    document.getElementById('modalMemberName').innerText =
+		        `پرونده: ${member.name}`;
+		
+		    document.getElementById('changeTierSelect').value =
+		        member.tier;
+		
+		    renderMemberPersonalInfo();
+		
+		    renderVisitsAndStats();
+		
+		    document.getElementById('visitModal').style.display = 'flex';
+		}
 
         function closeModal(force = false, modalId) {
             if (force === true || force.target === document.getElementById(modalId)) {
@@ -1727,6 +1795,56 @@
 		    }
 		
 		    location.reload();
+		}
+
+		function renderMemberPersonalInfo() {
+
+		    const member = members.find(
+		        m => m.id === currentActiveMemberId
+		    );
+		
+		    const container = document.getElementById('memberPersonalInfo');
+		
+		    if (!member || !container) {
+		        return;
+		    }
+		
+		    let genderText = 'مشخص نشده';
+		    let genderIcon = '👤';
+		
+		    if (member.gender === 'male') {
+		        genderText = 'مرد';
+		        genderIcon = '👨';
+		    } else if (member.gender === 'female') {
+		        genderText = 'زن';
+		        genderIcon = '👩';
+		    }
+		
+		    container.innerHTML = `
+		        <div>
+		            <strong>📱 شماره موبایل:</strong>
+		            <br>
+		            <span>
+		                ${member.phone || 'ثبت نشده'}
+		            </span>
+		        </div>
+		
+		        <div>
+		            <strong>🎂 تاریخ تولد:</strong>
+		            <br>
+		            <span>
+		                ${member.birthDate || 'ثبت نشده'}
+		            </span>
+		        </div>
+		
+		        <div>
+		            <strong>${genderIcon} جنسیت:</strong>
+		            <br>
+		            <span>
+		                ${genderText}
+		            </span>
+		        </div>
+		    `;
 		}
         async function initApp() {
 		    await loadData();
