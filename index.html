@@ -2519,7 +2519,6 @@
 		    `;
 		}
 		function editMemberInfo() {
-
 		    const member = members.find(
 		        m => m.id === currentActiveMemberId
 		    );
@@ -2533,140 +2532,99 @@
 		    container.style.display = 'block';
 		
 		    container.innerHTML = `
-		        <div style="
-		            display:grid;
-		            grid-template-columns:repeat(2, 1fr);
-		            gap:10px;
-		        ">
-		
-		            <div>
-		                <label style="
-		                    display:block;
-		                    font-size:11px;
-		                    margin-bottom:5px;
-		                ">
-		                    📱 شماره موبایل
-		                </label>
-		
-		                <input
-		                    type="text"
-		                    id="editMemberPhone"
-		                    class="formal-input"
-		                    value="${member.phone || ''}"
-		                    placeholder="شماره موبایل"
-		                    inputmode="numeric"
-		                >
-		            </div>
-		
-		            <div>
-		                <label style="
-		                    display:block;
-		                    font-size:11px;
-		                    margin-bottom:5px;
-		                ">
-		                    🎂 تاریخ تولد
-		                </label>
-		
-		                <input
-		                    type="date"
-		                    id="editMemberBirthDate"
-		                    class="formal-input"
-		                    value="${member.birthDate || ''}"
-		                >
-		            </div>
-		
-		            <div>
-		                <label style="
-		                    display:block;
-		                    font-size:11px;
-		                    margin-bottom:5px;
-		                ">
-		                    ⚧️ جنسیت
-		                </label>
-		
-		                <select
-		                    id="editMemberGender"
-		                    class="formal-input"
-		                >
-		                    <option value="">انتخاب نشده</option>
-		                    <option value="male" ${member.gender === 'male' ? 'selected' : ''}>
-		                        👨 مرد
-		                    </option>
-		                    <option value="female" ${member.gender === 'female' ? 'selected' : ''}>
-		                        👩 زن
-		                    </option>
-		                </select>
-		            </div>
-		
+		        <div class="form-group">
+		            <label>📱 شماره موبایل</label>
+		            <input
+		                type="text"
+		                id="editMemberPhone"
+		                class="formal-input"
+		                value="${member.phone || ''}"
+		                placeholder="شماره موبایل"
+		            >
 		        </div>
 		
-		        <div style="
-		            display:flex;
-		            gap:8px;
-		            margin-top:12px;
-		        ">
+		        <div class="form-group">
+		            <label>🎂 تاریخ تولد</label>
+		            <input
+		                type="text"
+		                id="editMemberBirthDate"
+		                class="formal-input"
+		                value="${member.birthDate ? formatPersianDate(member.birthDate) : ''}"
+		                placeholder="مثلاً ۱۳۸۵/۰۵/۲۰"
+		                maxlength="10"
+		                inputmode="numeric"
+		            >
+		        </div>
 		
+		        <div class="form-group">
+		            <label>👤 جنسیت</label>
+		            <select
+		                id="editMemberGender"
+		                class="formal-input"
+		            >
+		                <option value="">مشخص نشده</option>
+		                <option value="male" ${member.gender === 'male' ? 'selected' : ''}>
+		                    مرد
+		                </option>
+		                <option value="female" ${member.gender === 'female' ? 'selected' : ''}>
+		                    زن
+		                </option>
+		            </select>
+		        </div>
+		
+		        <div style="margin-top:15px;">
 		            <button
 		                onclick="saveMemberInfo()"
-		                style="
-		                    flex:1;
-		                    border:none;
-		                    background:#27ae60;
-		                    color:white;
-		                    border-radius:7px;
-		                    padding:9px;
-		                    cursor:pointer;
-		                    font-family:'Vazirmatn';
-		                "
+		                class="primary-btn"
 		            >
-		                💾 ذخیره
+		                💾 ذخیره تغییرات
 		            </button>
 		
 		            <button
 		                onclick="renderMemberPersonalInfo()"
-		                style="
-		                    flex:1;
-		                    border:1px solid #ccc;
-		                    background:white;
-		                    color:#555;
-		                    border-radius:7px;
-		                    padding:9px;
-		                    cursor:pointer;
-		                    font-family:'Vazirmatn';
-		                "
+		                class="secondary-btn"
 		            >
 		                انصراف
 		            </button>
-		
 		        </div>
 		    `;
 		}
-		
-		
+
 		async function saveMemberInfo() {
-		
 		    const member = members.find(
 		        m => m.id === currentActiveMemberId
 		    );
 		
 		    if (!member) {
-		        return alert("عضو پیدا نشد.");
+		        return;
 		    }
 		
 		    const phone =
 		        document.getElementById('editMemberPhone').value.trim();
 		
-		    const birthDate =
-		        document.getElementById('editMemberBirthDate').value;
+		    const jalaliBirthDate =
+		        document.getElementById('editMemberBirthDate').value.trim();
 		
 		    const gender =
 		        document.getElementById('editMemberGender').value;
+		
+		    let birthDate = null;
+		
+		    if (jalaliBirthDate) {
+		        birthDate = jalaliToGregorian(jalaliBirthDate);
+		
+		        if (!birthDate) {
+		            return alert(
+		                "تاریخ تولد صحیح نیست.\nمثال صحیح: ۱۳۸۵/۰۵/۲۰"
+		            );
+		        }
+		    }
 		
 		    const { data, error } = await supabaseClient
 		        .from('members')
 		        .update({
 		            phone: phone || null,
-		            birth_date: birthDate || null,
+		            birth_date: birthDate,
 		            gender: gender || null
 		        })
 		        .eq('id', member.id)
@@ -2674,23 +2632,21 @@
 		        .single();
 		
 		    if (error) {
-		        console.error("خطا در ویرایش اطلاعات عضو:", error);
-		        return alert("ذخیره اطلاعات در دیتابیس انجام نشد.");
+		        console.error('خطا در ویرایش اطلاعات عضو:', error);
+		        return alert('ذخیره تغییرات انجام نشد.');
 		    }
 		
-		    // به‌روزرسانی اطلاعات داخل برنامه
 		    member.phone = data.phone || '';
 		    member.birthDate = data.birth_date || '';
 		    member.gender = data.gender || '';
 		
 		    renderMemberPersonalInfo();
 		
-		    // به‌روزرسانی کارت اعضا
 		    filterMembers();
 		
-		    alert("اطلاعات عضو با موفقیت به‌روزرسانی شد.");
+		    alert('اطلاعات عضو با موفقیت به‌روزرسانی شد.');
 		}
-
+		
 		function formatPersianDate(dateValue) {
 		    if (!dateValue) {
 		        return 'ثبت نشده';
