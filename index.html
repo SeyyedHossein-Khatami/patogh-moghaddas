@@ -1428,7 +1428,21 @@
 		        m => !m.gender
 		    ).length;
 		
-		
+			const goldMembers = members.filter(
+			    m => m.tier === 'gold'
+			).length;
+			
+			const silverMembers = members.filter(
+			    m => m.tier === 'silver'
+			).length;
+			
+			const normalMembers = members.filter(
+			    m => m.tier === 'normal'
+			).length;
+			
+			const beheshtiMembers = members.filter(
+			    m => m.tier === 'beheshti'
+			).length;
 		    // =========================================
 		    // تاریخ جاری
 		    // =========================================
@@ -1785,7 +1799,114 @@
 		
 		        </div>
 		
-		
+				<!-- آمار اعضا بر اساس نوع کارت -->
+
+				<div style="
+				    margin-top:15px;
+				    padding-top:12px;
+				    border-top:1px solid #eee;
+				">
+				
+				    <h5 style="
+				        margin:0 0 10px 0;
+				        color:var(--text-light);
+				        font-size:13px;
+				    ">
+				        💳 اعضا بر اساس نوع کارت
+				    </h5>
+				
+				    <div style="
+				        display:grid;
+				        grid-template-columns:repeat(2, 1fr);
+				        gap:8px;
+				    ">
+				
+				        <div style="
+				            padding:10px;
+				            border-radius:8px;
+				            background:#fff8e6;
+				            border:1px solid #f1d58a;
+				            text-align:center;
+				        ">
+				            <div>🟡 کارت طلایی</div>
+				
+				            <strong style="
+				                display:block;
+				                margin-top:5px;
+				                font-size:18px;
+				            ">
+				                ${fM(goldMembers)}
+				            </strong>
+				
+				            <small>نفر</small>
+				        </div>
+				
+				
+				        <div style="
+				            padding:10px;
+				            border-radius:8px;
+				            background:#f4f4f4;
+				            border:1px solid #d5d5d5;
+				            text-align:center;
+				        ">
+				            <div>⚪ کارت نقره‌ای</div>
+				
+				            <strong style="
+				                display:block;
+				                margin-top:5px;
+				                font-size:18px;
+				            ">
+				                ${fM(silverMembers)}
+				            </strong>
+				
+				            <small>نفر</small>
+				        </div>
+				
+				
+				        <div style="
+				            padding:10px;
+				            border-radius:8px;
+				            background:#eef6ff;
+				            border:1px solid #c8dff5;
+				            text-align:center;
+				        ">
+				            <div>🔵 عضو عادی</div>
+				
+				            <strong style="
+				                display:block;
+				                margin-top:5px;
+				                font-size:18px;
+				            ">
+				                ${fM(normalMembers)}
+				            </strong>
+				
+				            <small>نفر</small>
+				        </div>
+				
+				
+				        <div style="
+				            padding:10px;
+				            border-radius:8px;
+				            background:#eefaf1;
+				            border:1px solid #c9e8d0;
+				            text-align:center;
+				        ">
+				            <div>🟢 کارت بهشتی</div>
+				
+				            <strong style="
+				                display:block;
+				                margin-top:5px;
+				                font-size:18px;
+				            ">
+				                ${fM(beheshtiMembers)}
+				            </strong>
+				
+				            <small>نفر</small>
+				        </div>
+				
+				    </div>
+				
+				</div>
 		        <!-- ================================= -->
 		        <!-- آمار کلی حضور -->
 		        <!-- ================================= -->
