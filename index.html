@@ -338,54 +338,68 @@
 		
 		</div>
         <div class="control-panel">
-            <div class="input-row">
-                <input type="text" id="newName" class="formal-input" placeholder="نام عضو جدید...">
-				<input
-				    type="text"
-				    id="newPhone"
-				    placeholder="شماره موبایل"
-				    inputmode="numeric"
-				    style="
-				        padding:10px;
-				        border:1px solid #ccc;
-				        border-radius:8px;
-				        font-family:'Vazirmatn';
-				    "
-				>
-				
-				<input
-				    type="date"
-				    id="newBirthDate"
-				    style="
-				        padding:10px;
-				        border:1px solid #ccc;
-				        border-radius:8px;
-				        font-family:'Vazirmatn';
-				    "
-				>
-				
-				<select
-				    id="newGender"
-				    style="
-				        padding:10px;
-				        border:1px solid #ccc;
-				        border-radius:8px;
-				        font-family:'Vazirmatn';
-				    "
-				>
-				    <option value="">جنسیت را انتخاب کنید</option>
-				    <option value="male">مرد</option>
-				    <option value="female">زن</option>
-				</select>
-                <select id="newTier" class="formal-input">
-                    <option value="normal">عضو عادی (ساعتی ۵۰ت)</option>
-                    <option value="silver">کارت نقره‌ای (ساعتی ۳۰ت)</option>
-                    <option value="gold">کارت طلایی (ساعتی ۲۰ت)</option>
-                    <option value="beheshti">کارت بهشتی (رایگان)</option>
-                </select>
-            </div>
-            <button class="btn-primary" onclick="addMember()">➕ ثبت عضو جدید در سیستم</button>
-        </div>
+        	<div class="input-row">
+
+			    <input
+			        type="text"
+			        id="newName"
+			        class="formal-input"
+			        placeholder="نام عضو جدید..."
+			    >
+			
+			    <select
+			        id="newTier"
+			        class="formal-input"
+			    >
+			        <option value="normal">عضو عادی (ساعتی ۵۰ت)</option>
+			        <option value="silver">کارت نقره‌ای (ساعتی ۳۰ت)</option>
+			        <option value="gold">کارت طلایی (ساعتی ۲۰ت)</option>
+			        <option value="beheshti">کارت بهشتی (رایگان)</option>
+			    </select>
+			
+			</div>
+	
+			<div style="
+			    display:grid;
+			    grid-template-columns:repeat(3, 1fr);
+			    gap:10px;
+			    width:100%;
+			    margin-top:10px;
+			    box-sizing:border-box;
+			">
+			
+			    <input
+			        type="text"
+			        id="newPhone"
+			        class="formal-input"
+			        placeholder="شماره موبایل"
+			        inputmode="numeric"
+			    >
+			
+			    <input
+			        type="date"
+			        id="newBirthDate"
+			        class="formal-input"
+			    >
+			
+			    <select
+			        id="newGender"
+			        class="formal-input"
+			    >
+			        <option value="">جنسیت را انتخاب کنید</option>
+			        <option value="male">مرد</option>
+			        <option value="female">زن</option>
+			    </select>
+			
+			</div>
+			
+			<button
+			    class="btn-primary"
+			    onclick="addMember()"
+			>
+			    ➕ ثبت عضو جدید در سیستم
+			</button>   
+		</div>
 
         <div class="search-wrapper">
             <span class="search-icon">🔍</span>
