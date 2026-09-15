@@ -725,19 +725,66 @@
         }
 
         function filterMembers() { renderList(document.getElementById('searchInput').value); }
-
+		
+		function jalaliToGregorian(jalaliDate) {
+		    if (!jalaliDate) return null;
+		
+		    // تبدیل اعداد فارسی به انگلیسی
+		    jalaliDate = jalaliDate
+		        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+		        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+		
+		    const parts = jalaliDate.split('/');
+		
+		    if (parts.length !== 3) {
+		        return null;
+		    }
+		
+		    const year = Number(parts[0]);
+		    const month = Number(parts[1]);
+		    const day = Number(parts[2]);
+		
+		    if (!year || !month || !day) {
+		        return null;
+		    }
+		
+		    if (!jalaali.isValidJalaaliDate(year, month, day)) {
+		        return null;
+		    }
+		
+		    const gregorian = jalaali.toGregorian(year, month, day);
+		
+		    const gy = gregorian.gy;
+		    const gm = String(gregorian.gm).padStart(2, '0');
+		    const gd = String(gregorian.gd).padStart(2, '0');
+		
+		    return `${gy}-${gm}-${gd}`;
+		}
         async function addMember() {
-
 		    const nameEl = document.getElementById('newName');
 		
 		    const newName = nameEl.value.trim();
 		    const newTier = document.getElementById('newTier').value;
 		    const newPhone = document.getElementById('newPhone').value.trim();
-		    const newBirthDate = document.getElementById('newBirthDate').value;
+		    const jalaliBirthDate =
+		        document.getElementById('newBirthDate').value.trim();
 		    const newGender = document.getElementById('newGender').value;
 		
 		    if (!newName) {
 		        return alert("لطفاً نام را وارد نمایید.");
+		    }
+		
+		    // تبدیل تاریخ شمسی به میلادی
+		    let newBirthDate = null;
+		
+		    if (jalaliBirthDate) {
+		        newBirthDate = jalaliToGregorian(jalaliBirthDate);
+		
+		        if (!newBirthDate) {
+		            return alert(
+		                "تاریخ تولد صحیح نیست.\nمثال صحیح: ۱۳۸۵/۰۵/۲۰"
+		            );
+		        }
 		    }
 		
 		    const { data, error } = await supabaseClient
@@ -746,7 +793,7 @@
 		            name: newName,
 		            tier: newTier,
 		            phone: newPhone || null,
-		            birth_date: newBirthDate || null,
+		            birth_date: newBirthDate,
 		            gender: newGender || null
 		        })
 		        .select()
@@ -769,7 +816,6 @@
 		
 		    filterMembers();
 		
-		    // پاک کردن فرم
 		    nameEl.value = "";
 		    document.getElementById('newPhone').value = "";
 		    document.getElementById('newBirthDate').value = "";
