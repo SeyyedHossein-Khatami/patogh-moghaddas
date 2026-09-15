@@ -473,6 +473,7 @@
 	);
 
 	async function loadData() {
+
 	    const { data: membersData, error: membersError } = await supabaseClient
 	        .from('members')
 	        .select('*')
@@ -497,9 +498,14 @@
 	    }
 	
 	    members = membersData.map(member => ({
+	
 	        id: member.id,
 	        name: member.name,
 	        tier: member.tier || 'normal',
+	
+	        phone: member.phone || '',
+	        birthDate: member.birth_date || '',
+	        gender: member.gender || '',
 	
 	        visits: visitsData
 	            .filter(visit => visit.member_id === member.id)
@@ -612,7 +618,41 @@
                         <div class="member-card ${cssClass}">
                             <div class="member-info">
                                 <div class="member-name">${member.name}</div>
-                                <div class="member-badge">${tierLabel}</div>
+								<div style="
+								    display:flex;
+								    align-items:center;
+								    gap:6px;
+								">
+								
+								    <span
+								        class="member-badge"
+								    >
+								        ${tierLabel}
+								    </span>
+								
+								    <span
+								        style="
+								            font-size:20px;
+								            line-height:1;
+								        "
+								        title="${
+								            member.gender === 'male'
+								                ? 'مرد'
+								                : member.gender === 'female'
+								                    ? 'زن'
+								                    : 'جنسیت مشخص نشده'
+								        }"
+								    >
+								        ${
+								            member.gender === 'male'
+								                ? '👨'
+								                : member.gender === 'female'
+								                    ? '👩'
+								                    : '👤'
+								        }
+								    </span>
+								
+								</div>
                                 ${activeLabel}
                                 ${debtLabel}
                             </div>
@@ -629,39 +669,56 @@
         function filterMembers() { renderList(document.getElementById('searchInput').value); }
 
         async function addMember() {
-    		const nameEl = document.getElementById('newName');
-    		const newName = nameEl.value.trim();
-    		const newTier = document.getElementById('newTier').value;
 
-    		if (!newName) {
-        		return alert("لطفاً نام را وارد نمایید.");
-    				}
-
-    		const { data, error } = await supabaseClient
-        		.from('members')
-        		.insert({
-            			name: newName,
-            			tier: newTier
-        		})
-        		.select()
-        		.single();
-
-    		if (error) {
-        		console.error('خطا در ثبت عضو:', error);
-        		return alert('ثبت عضو در دیتابیس انجام نشد.');
-    				}
-
-    		members.unshift({
-        		id: data.id,
-        		name: data.name,
-       			tier: data.tier,
-       			visits: []
-		});
-
-    		filterMembers();
-    		nameEl.value = "";
-	}
-
+		    const nameEl = document.getElementById('newName');
+		
+		    const newName = nameEl.value.trim();
+		    const newTier = document.getElementById('newTier').value;
+		    const newPhone = document.getElementById('newPhone').value.trim();
+		    const newBirthDate = document.getElementById('newBirthDate').value;
+		    const newGender = document.getElementById('newGender').value;
+		
+		    if (!newName) {
+		        return alert("لطفاً نام را وارد نمایید.");
+		    }
+		
+		    const { data, error } = await supabaseClient
+		        .from('members')
+		        .insert({
+		            name: newName,
+		            tier: newTier,
+		            phone: newPhone || null,
+		            birth_date: newBirthDate || null,
+		            gender: newGender || null
+		        })
+		        .select()
+		        .single();
+		
+		    if (error) {
+		        console.error('خطا در ثبت عضو:', error);
+		        return alert('ثبت عضو در دیتابیس انجام نشد.');
+		    }
+		
+		    members.unshift({
+		        id: data.id,
+		        name: data.name,
+		        tier: data.tier,
+		        phone: data.phone,
+		        birthDate: data.birth_date,
+		        gender: data.gender,
+		        visits: []
+		    });
+		
+		    filterMembers();
+		
+		    // پاک کردن فرم
+		    nameEl.value = "";
+		    document.getElementById('newPhone').value = "";
+		    document.getElementById('newBirthDate').value = "";
+		    document.getElementById('newGender').value = "";
+		
+		    alert("عضو با موفقیت ثبت شد.");
+		}
         async function removeMember(id) {
     		if (confirm("آیا از حذف این شخص و تمام سوابق او اطمینان دارید؟")) {
 
