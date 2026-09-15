@@ -2697,12 +2697,7 @@
 		    }
 		
 		    try {
-		        // فقط بخش تاریخ را جدا می‌کنیم
-		        // مثال:
-		        // 2006-08-11
-		        // 2006-08-11T00:00:00
 		        const dateOnly = String(dateValue).substring(0, 10);
-		
 		        const parts = dateOnly.split('-');
 		
 		        if (parts.length !== 3) {
@@ -2714,10 +2709,6 @@
 		        const gd = Number(parts[2]);
 		
 		        if (!gy || !gm || !gd) {
-		            return 'تاریخ نامعتبر';
-		        }
-		
-		        if (!jalaali.isValidGregorianDate(gy, gm, gd)) {
 		            return 'تاریخ نامعتبر';
 		        }
 		
