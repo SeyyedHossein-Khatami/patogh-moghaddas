@@ -377,10 +377,13 @@
 			    >
 			
 			    <input
-			        type="date"
-			        id="newBirthDate"
-			        class="formal-input"
-			    >
+				    type="text"
+				    id="newBirthDate"
+				    class="formal-input"
+				    placeholder="تاریخ تولد (مثلاً ۱۳۸۵/۰۵/۲۰)"
+				    maxlength="10"
+				    inputmode="numeric"
+				>
 			
 			    <select
 			        id="newGender"
@@ -2455,7 +2458,7 @@
 		            <strong>🎂 تاریخ تولد:</strong>
 		            <br>
 		            <span>
-		                ${member.birthDate || 'ثبت نشده'}
+		                ${formatPersianDate(member.birthDate)}
 		            </span>
 		        </div>
 		
@@ -2639,6 +2642,25 @@
 		    filterMembers();
 		
 		    alert("اطلاعات عضو با موفقیت به‌روزرسانی شد.");
+		}
+
+		function formatPersianDate(dateValue) {
+
+		    if (!dateValue) {
+		        return 'ثبت نشده';
+		    }
+		
+		    const date = new Date(dateValue + 'T00:00:00');
+		
+		    if (isNaN(date.getTime())) {
+		        return 'تاریخ نامعتبر';
+		    }
+		
+		    return date.toLocaleDateString('fa-IR', {
+		        year: 'numeric',
+		        month: '2-digit',
+		        day: '2-digit'
+		    });
 		}
         async function initApp() {
 		    await loadData();
