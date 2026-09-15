@@ -2696,25 +2696,34 @@
 		        return 'ثبت نشده';
 		    }
 		
-		    // تاریخ ذخیره‌شده در دیتابیس به شکل YYYY-MM-DD است
-		    const parts = dateValue.split('-');
-		
-		    if (parts.length !== 3) {
-		        return 'تاریخ نامعتبر';
-		    }
-		
-		    const gy = Number(parts[0]);
-		    const gm = Number(parts[1]);
-		    const gd = Number(parts[2]);
-		
-		    if (!gy || !gm || !gd) {
-		        return 'تاریخ نامعتبر';
-		    }
-		
 		    try {
-		        const jalali = jalaali.toJalaali(gy, gm, gd);
+		        // فقط بخش تاریخ را جدا می‌کنیم
+		        // مثال:
+		        // 2006-08-11
+		        // 2006-08-11T00:00:00
+		        const dateOnly = String(dateValue).substring(0, 10);
 		
-		        return `${String(jalali.jy).padStart(4, '0')}/${String(jalali.jm).padStart(2, '0')}/${String(jalali.jd).padStart(2, '0')}`;
+		        const parts = dateOnly.split('-');
+		
+		        if (parts.length !== 3) {
+		            return 'تاریخ نامعتبر';
+		        }
+		
+		        const gy = Number(parts[0]);
+		        const gm = Number(parts[1]);
+		        const gd = Number(parts[2]);
+		
+		        if (!gy || !gm || !gd) {
+		            return 'تاریخ نامعتبر';
+		        }
+		
+		        if (!jalaali.isValidGregorianDate(gy, gm, gd)) {
+		            return 'تاریخ نامعتبر';
+		        }
+		
+		        const result = jalaali.toJalaali(gy, gm, gd);
+		
+		        return `${String(result.jy).padStart(4, '0')}/${String(result.jm).padStart(2, '0')}/${String(result.jd).padStart(2, '0')}`;
 		
 		    } catch (error) {
 		        console.error('خطا در تبدیل تاریخ تولد:', error);
