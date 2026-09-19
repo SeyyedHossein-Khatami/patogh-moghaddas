@@ -491,19 +491,26 @@
 		            <!-- انتخاب بازیکنان -->
 		
 		            <div style="margin-top:15px;">
-		
-		                <label class="live-game-label">
-		                    👥 انتخاب بازیکنان
-		                </label>
-		
-		                <div
-		                    id="liveGamePlayers"
-		                    class="player-selection-box"
-		                >
-		                    در حال دریافت اعضا...
-		                </div>
-		
-		            </div>
+					
+					    <label class="live-game-label">
+					        👥 انتخاب بازیکنان
+					    </label>
+					
+					    <input
+					        type="text"
+					        id="liveGamePlayerSearch"
+					        class="formal-input"
+					        placeholder="🔎 جستجوی نام بازیکن..."
+					        oninput="filterLiveGamePlayers()"
+					        style="margin-top:8px;"
+					    >
+					
+					    <div
+					        id="liveGamePlayers"
+					        class="player-selection-box"
+					    ></div>
+					
+					</div>
 		
 		
 		            <!-- شروع بازی -->
@@ -2712,6 +2719,10 @@
 		// نمایش بازی‌ها و اعضا در فرم
 		// =========================================
 		
+		// =========================================
+		// آماده‌سازی فرم شروع بازی
+		// =========================================
+		
 		function renderLiveGameForm() {
 		
 		    const gameSelect =
@@ -2720,77 +2731,91 @@
 		    const playersContainer =
 		        document.getElementById('liveGamePlayers');
 		
-		    if (!gameSelect || !playersContainer) return;
+		    const startTimeInput =
+		        document.getElementById('liveGameStartTime');
 		
 		
-		    // -----------------------------
-		    // بازی‌ها
-		    // -----------------------------
-		
-		    const activeGames =
-		        gameCatalog.filter(game => game.is_active);
-		
-		
-		    gameSelect.innerHTML = `
-		        <option value="">
-		            انتخاب بازی...
-		        </option>
-		
-		        ${
-		            activeGames
-		                .map(game => `
-		                    <option value="${game.id}">
-		                        ${game.name}
-		                    </option>
-		                `)
-		                .join('')
-		        }
-		    `;
-		
-		
-		    // -----------------------------
-		    // اعضا
-		    // -----------------------------
-		
-		    if (members.length === 0) {
-		
-		        playersContainer.innerHTML = `
-		            <div class="no-live-games">
-		                هنوز عضوی در سیستم ثبت نشده است.
-		            </div>
-		        `;
-		
+		    if (!gameSelect || !playersContainer) {
 		        return;
 		    }
 		
 		
-		    playersContainer.innerHTML =
+		    // -----------------------------------------
+		    // لیست بازی‌ها
+		    // -----------------------------------------
+		
+		    gameSelect.innerHTML = `
+		        <option value="">
+		            انتخاب بازی
+		        </option>
+		    `;
+		
+		    gameCatalog
+		        .filter(game => game.is_active)
+		        .forEach(game => {
+		
+		            gameSelect.innerHTML += `
+		                <option value="${game.id}">
+		                    ${game.name}
+		                </option>
+		            `;
+		
+		        });
+		
+		
+		    // -----------------------------------------
+		    // لیست بازیکنان
+		    // -----------------------------------------
+		
+		    playersContainer.innerHTML = '';
+		
+		
+		    if (!members || members.length === 0) {
+		
+		        playersContainer.innerHTML = `
+		            <div style="
+		                text-align:center;
+		                color:#888;
+		                padding:15px;
+		                font-size:12px;
+		            ">
+		                عضوی برای انتخاب وجود ندارد.
+		            </div>
+		        `;
+		
+		    } else {
+		
 		        members
-		            .map(member => {
+		            .slice()
+		            .sort((a, b) =>
+		                a.name.localeCompare(
+		                    b.name,
+		                    'fa'
+		                )
+		            )
+		            .forEach(member => {
 		
-		                const tierLabel =
-		                    member.tier === 'gold'
-		                        ? 'طلایی'
-		                        : member.tier === 'silver'
-		                            ? 'نقره‌ای'
-		                            : member.tier === 'beheshti'
-		                                ? 'بهشتی'
-		                                : 'عادی';
+		                let tierText = 'عضو عادی';
+		                let tierClass = 'player-tier-normal';
+		
+		                if (member.tier === 'silver') {
+		                    tierText = 'کارت نقره‌ای';
+		                    tierClass = 'player-tier-silver';
+		
+		                } else if (member.tier === 'gold') {
+		                    tierText = 'کارت طلایی';
+		                    tierClass = 'player-tier-gold';
+		
+		                } else if (member.tier === 'beheshti') {
+		                    tierText = 'کارت بهشتی';
+		                    tierClass = 'player-tier-beheshti';
+		                }
 		
 		
-		                const tierClass =
-		                    member.tier === 'gold'
-		                        ? 'player-tier-gold'
-		                        : member.tier === 'silver'
-		                            ? 'player-tier-silver'
-		                            : member.tier === 'beheshti'
-		                                ? 'player-tier-beheshti'
-		                                : 'player-tier-normal';
-		
-		
-		                return `
+		                playersContainer.innerHTML += `
 		                    <label
 		                        class="player-selection-item"
+		                        data-player-name="${member.name}"
 		                    >
 		
 		                        <input
@@ -2799,40 +2824,60 @@
 		                            value="${member.id}"
 		                        >
 		
-		                        <span class="player-selection-name">
+		                        <span
+		                            class="player-selection-name"
+		                        >
 		                            ${member.name}
 		                        </span>
 		
 		                        <span
-		                            class="player-selection-tier ${tierClass}"
+		                            class="${tierClass}"
 		                        >
-		                            ${tierLabel}
+		                            ${tierText}
 		                        </span>
 		
 		                    </label>
 		                `;
 		
-		            })
-		            .join('');
+		            });
+		
+		    }
 		
 		
-		    // -----------------------------
-		    // ساعت پیش‌فرض
-		    // -----------------------------
+		    // -----------------------------------------
+		    // ساعت شروع پیش‌فرض
+		    // -----------------------------------------
 		
-		    const startTimeInput =
-		        document.getElementById('liveGameStartTime');
-		
-		    if (startTimeInput && !startTimeInput.value) {
+		    if (startTimeInput) {
 		
 		        const now = new Date();
 		
+		        const hours =
+		            String(
+		                now.getHours()
+		            ).padStart(2, '0');
+		
+		        const minutes =
+		            String(
+		                now.getMinutes()
+		            ).padStart(2, '0');
+		
 		        startTimeInput.value =
-		            now.getHours().toString().padStart(2, '0')
-		            + ':' +
-		            now.getMinutes().toString().padStart(2, '0');
+		            `${hours}:${minutes}`;
 		
 		    }
+		
+		
+		    // پاک کردن جستجو
+		    const searchInput =
+		        document.getElementById(
+		            'liveGamePlayerSearch'
+		        );
+		
+		    if (searchInput) {
+		        searchInput.value = '';
+		    }
+		
 		}
 		
 		
@@ -2843,10 +2888,14 @@
 		async function startGameSession() {
 		
 		    const gameSelect =
-		        document.getElementById('liveGameSelect');
+		        document.getElementById(
+		            'liveGameSelect'
+		        );
 		
 		    const startTimeInput =
-		        document.getElementById('liveGameStartTime');
+		        document.getElementById(
+		            'liveGameStartTime'
+		        );
 		
 		
 		    if (!gameSelect || !startTimeInput) {
@@ -2883,9 +2932,9 @@
 		    }
 		
 		
-		    // -----------------------------
+		    // -----------------------------------------
 		    // بازیکنان انتخاب‌شده
-		    // -----------------------------
+		    // -----------------------------------------
 		
 		    const selectedPlayers =
 		        Array.from(
@@ -2906,9 +2955,9 @@
 		    }
 		
 		
-		    // -----------------------------
+		    // -----------------------------------------
 		    // اطلاعات بازی
-		    // -----------------------------
+		    // -----------------------------------------
 		
 		    const selectedGame =
 		        gameCatalog.find(
@@ -2925,26 +2974,30 @@
 		    }
 		
 		
-		    // -----------------------------
-		    // بررسی اینکه بازیکن
-		    // قبلاً در یک بازی فعال نباشد
-		    // -----------------------------
+		    // -----------------------------------------
+		    // بررسی بازی فعال بازیکنان
+		    // -----------------------------------------
 		
 		    const {
 		        data: activePlayerGames,
 		        error: activePlayerError
 		    } = await supabaseClient
+		
 		        .from('game_session_players')
+		
 		        .select(`
 		            member_id,
 		            game_session_id,
 		            game_sessions!inner(
 		                id,
-		                game_type,
 		                status
 		            )
 		        `)
-		        .in('member_id', selectedPlayers);
+		
+		        .in(
+		            'member_id',
+		            selectedPlayers
+		        );
 		
 		
 		    if (activePlayerError) {
@@ -2982,7 +3035,9 @@
 		            members
 		                .filter(
 		                    member =>
-		                        busyMemberIds.includes(member.id)
+		                        busyMemberIds.includes(
+		                            member.id
+		                        )
 		                )
 		                .map(
 		                    member =>
@@ -2997,34 +3052,48 @@
 		    }
 		
 		
-		    // -----------------------------
-		    // ثبت جلسه بازی
-		    // -----------------------------
+		    // -----------------------------------------
+		    // ساخت زمان شروع
+		    // -----------------------------------------
 		
-		    const today =
-		        new Date().toISOString();
+		    const startDateTime =
+		        buildDateTimeFromTime(
+		            startTime
+		        );
 		
+		
+		    // -----------------------------------------
+		    // ایجاد جلسه بازی
+		    // -----------------------------------------
 		
 		    const {
 		        data: session,
 		        error: sessionError
 		    } = await supabaseClient
+		
 		        .from('game_sessions')
+		
 		        .insert({
 		
-		            game_type: selectedGame.name,
+		            game_id:
+		                selectedGame.id,
+		
+		            game_name:
+		                selectedGame.name,
 		
 		            start_time:
-		                buildDateTimeFromTime(
-		                    startTime
-		                ),
+		                startDateTime,
 		
-		            status: 'playing',
+		            status:
+		                'playing',
 		
-		            duration: 0
+		            duration_minutes:
+		                0
 		
 		        })
+		
 		        .select()
+		
 		        .single();
 		
 		
@@ -3042,42 +3111,47 @@
 		    }
 		
 		
-		    // -----------------------------
+		    // -----------------------------------------
 		    // ساخت بازیکنان جلسه
-		    // -----------------------------
+		    // -----------------------------------------
 		
 		    const playerRows =
-		        selectedPlayers.map(memberId => {
+		        selectedPlayers.map(
+		            memberId => {
 		
-		            const member =
-		                members.find(
-		                    m => m.id === memberId
-		                );
+		                const member =
+		                    members.find(
+		                        m =>
+		                            m.id === memberId
+		                    );
 		
 		
-		            return {
+		                return {
 		
-		                game_session_id:
-		                    session.id,
+		                    game_session_id:
+		                        session.id,
 		
-		                member_id:
-		                    memberId,
+		                    member_id:
+		                        memberId,
 		
-		                tier:
-		                    member?.tier || 'normal',
+		                    amount:
+		                        0
 		
-		                amount: 0
+		                };
 		
-		            };
-		
-		        });
+		            }
+		        );
 		
 		
 		    const {
 		        error: playersError
 		    } = await supabaseClient
+		
 		        .from('game_session_players')
-		        .insert(playerRows);
+		
+		        .insert(
+		            playerRows
+		        );
 		
 		
 		    if (playersError) {
@@ -3088,11 +3162,14 @@
 		        );
 		
 		
-		        // حذف جلسه‌ای که ناقص ایجاد شده
+		        // حذف جلسه ناقص
 		        await supabaseClient
 		            .from('game_sessions')
 		            .delete()
-		            .eq('id', session.id);
+		            .eq(
+		                'id',
+		                session.id
+		            );
 		
 		
 		        return alert(
@@ -3102,23 +3179,38 @@
 		    }
 		
 		
-		    // -----------------------------
+		    // -----------------------------------------
 		    // پاک کردن فرم
-		    // -----------------------------
+		    // -----------------------------------------
 		
 		    gameSelect.value = '';
 		
+		
 		    document
-		        .querySelectorAll('.live-player-checkbox')
+		        .querySelectorAll(
+		            '.live-player-checkbox'
+		        )
 		        .forEach(
-		            checkbox =>
-		                checkbox.checked = false
+		            checkbox => {
+		                checkbox.checked = false;
+		            }
 		        );
 		
 		
-		    // -----------------------------
+		    const searchInput =
+		        document.getElementById(
+		            'liveGamePlayerSearch'
+		        );
+		
+		    if (searchInput) {
+		        searchInput.value = '';
+		        filterLiveGamePlayers();
+		    }
+		
+		
+		    // -----------------------------------------
 		    // نمایش بازی‌های جاری
-		    // -----------------------------
+		    // -----------------------------------------
 		
 		    await loadLiveGameSessions();
 		
@@ -3126,9 +3218,69 @@
 		    alert(
 		        `بازی «${selectedGame.name}» با موفقیت شروع شد.`
 		    );
+		
 		}
 		
 		
+		// =========================================
+		// جستجوی بازیکنان بازی
+		// =========================================
+		
+		function filterLiveGamePlayers() {
+		
+		    const searchInput =
+		        document.getElementById(
+		            'liveGamePlayerSearch'
+		        );
+		
+		    const playersContainer =
+		        document.getElementById(
+		            'liveGamePlayers'
+		        );
+		
+		
+		    if (!searchInput || !playersContainer) {
+		        return;
+		    }
+		
+		
+		    const searchText =
+		        searchInput.value
+		            .trim()
+		            .toLowerCase();
+		
+		
+		    const players =
+		        playersContainer.querySelectorAll(
+		            '.player-selection-item'
+		        );
+		
+		
+		    players.forEach(player => {
+		
+		        const playerName =
+		            (
+		                player.dataset.playerName ||
+		                ''
+		            ).toLowerCase();
+		
+		
+		        if (
+		            !searchText ||
+		            playerName.includes(searchText)
+		        ) {
+		
+		            player.style.display = 'flex';
+		
+		        } else {
+		
+		            player.style.display = 'none';
+		
+		        }
+		
+		    });
+		
+		}
 		// =========================================
 		// تبدیل ساعت به timestamptz
 		// =========================================
