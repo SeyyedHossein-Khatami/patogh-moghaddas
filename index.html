@@ -3530,46 +3530,61 @@
 		
 		                            <tbody>
 		
-		                                ${sortedGames.map(
-		                                    ([gameName, stat]) => `
-		                                        <tr
-		                                            style="
-		                                                border-bottom:
-		                                                1px solid #eee;
-		                                            "
-		                                        >
-		
-		                                            <td style="padding:10px;">
-		                                                🎮 ${gameName}
-		                                            </td>
-		
-		                                            <td style="
-		                                                padding:10px;
-		                                                text-align:center;
-		                                            ">
-		                                                ${stat.sessions
-		                                                    .toLocaleString('fa-IR')}
-		                                            </td>
-		
-		                                            <td style="
-		                                                padding:10px;
-		                                                text-align:center;
-		                                            ">
-		                                                ${stat.participants
-		                                                    .toLocaleString('fa-IR')}
-		                                            </td>
-		
-		                                            <td style="
-		                                                padding:10px;
-		                                            ">
-		                                                ${stat.revenue
-		                                                    .toLocaleString('fa-IR')}
-		                                                تومان
-		                                            </td>
-		
-		                                        </tr>
-		                                    `
-		                                ).join('')}
+		                                ${sortedGames
+										    .slice(0, 3)
+										    .map(
+										        ([gameName, stat]) => `
+										            <tr style="
+										                border-bottom:1px solid #eee;
+										            ">
+										
+										                <td style="padding:10px;">
+										                    🎮 ${gameName}
+										                </td>
+										
+										                <td style="
+										                    padding:10px;
+										                    text-align:center;
+										                ">
+										                    ${stat.sessions.toLocaleString('fa-IR')}
+										                </td>
+										
+										                <td style="
+										                    padding:10px;
+										                    text-align:center;
+										                ">
+										                    ${stat.participants.toLocaleString('fa-IR')}
+										                </td>
+										
+										                <td style="padding:10px;">
+										                    ${stat.revenue.toLocaleString('fa-IR')}
+										                    تومان
+										                </td>
+										
+										            </tr>
+										        `
+										    )
+									    .join('')}
+										${sortedGames.length > 3 ? `
+										    <div style="
+										        text-align:center;
+										        margin-top:12px;
+										    ">
+										        <button
+										            onclick="showAllDashboardGames()"
+										            style="
+										                border:none;
+										                background:#f1f1f1;
+										                padding:9px 18px;
+										                border-radius:8px;
+										                cursor:pointer;
+										                font-family:inherit;
+										            "
+										        >
+										            📋 مشاهده همه بازی‌ها
+										        </button>
+										    </div>
+										` : ''}
 		
 		                            </tbody>
 		
@@ -3702,6 +3717,26 @@
 		                                        </tr>
 		
 		                                    `).join('')}
+											${sortedMembers.length > 10 ? `
+											    <div style="
+											        text-align:center;
+											        margin-top:12px;
+											    ">
+											        <button
+											            onclick="showAllDashboardMembers()"
+											            style="
+											                border:none;
+											                background:#f1f1f1;
+											                padding:9px 18px;
+											                border-radius:8px;
+											                cursor:pointer;
+											                font-family:inherit;
+											            "
+											        >
+											            📋 مشاهده همه اعضا
+											        </button>
+											    </div>
+											` : ''}
 		
 		                            </tbody>
 		
@@ -4720,6 +4755,443 @@
 		            }).join('')}
 		        </div>
 		    `;
+		}
+
+		function showAllDashboardMembers() {
+
+		    const sessions = gameSessions || [];
+		
+		    const memberStats = {};
+		
+		    sessions.forEach(session => {
+		
+		        (session.players || []).forEach(player => {
+		
+		            const memberId =
+		                String(player.memberId);
+		
+		            if (!memberStats[memberId]) {
+		
+		                const member =
+		                    members.find(
+		                        m =>
+		                            String(m.id) === memberId
+		                    );
+		
+		                memberStats[memberId] = {
+		                    name: member
+		                        ? member.name
+		                        : 'عضو حذف‌شده',
+		
+		                    sessions: 0,
+		                    amount: 0,
+		                    paid: 0,
+		                    debt: 0
+		                };
+		            }
+		
+		
+		            const stat =
+		                memberStats[memberId];
+		
+		            stat.sessions++;
+		
+		            const amount =
+		                Number(player.amount || 0);
+		
+		            stat.amount += amount;
+		
+		            if (player.paymentStatus === 'paid') {
+		                stat.paid += amount;
+		            }
+		
+		            if (player.paymentStatus === 'debt') {
+		                stat.debt += amount;
+		            }
+		
+		        });
+		
+		    });
+		
+		
+		    const sortedMembers =
+		        Object.values(memberStats)
+		            .sort(
+		                (a, b) =>
+		                    b.sessions - a.sessions
+		            );
+		
+		
+		    const existing =
+		        document.getElementById(
+		            'allDashboardMembersModal'
+		        );
+		
+		    if (existing) {
+		        existing.remove();
+		    }
+		
+		
+		    const modal =
+		        document.createElement('div');
+		
+		    modal.id = 'allDashboardMembersModal';
+		
+		    modal.style.cssText = `
+		        position:fixed;
+		        inset:0;
+		        background:rgba(0,0,0,.55);
+		        display:flex;
+		        align-items:center;
+		        justify-content:center;
+		        z-index:9999;
+		        padding:20px;
+		    `;
+		
+		
+		    modal.innerHTML = `
+		        <div style="
+		            background:white;
+		            width:100%;
+		            max-width:900px;
+		            max-height:85vh;
+		            overflow:auto;
+		            border-radius:15px;
+		            padding:20px;
+		        ">
+		
+		            <div style="
+		                display:flex;
+		                justify-content:space-between;
+		                align-items:center;
+		                margin-bottom:15px;
+		            ">
+		
+		                <h3 style="margin:0;">
+		                    👥 همه اعضا
+		                </h3>
+		
+		                <button
+		                    onclick="
+		                        document
+		                            .getElementById('allDashboardMembersModal')
+		                            .remove()
+		                    "
+		                    style="
+		                        border:none;
+		                        background:#eee;
+		                        width:35px;
+		                        height:35px;
+		                        border-radius:50%;
+		                        cursor:pointer;
+		                        font-size:18px;
+		                    "
+		                >
+		                    ×
+		                </button>
+		
+		            </div>
+		
+		
+		            <div style="overflow-x:auto;">
+		
+		                <table style="
+		                    width:100%;
+		                    border-collapse:collapse;
+		                    font-size:13px;
+		                ">
+		
+		                    <thead>
+		
+		                        <tr style="
+		                            background:#f5f5f5;
+		                        ">
+		
+		                            <th style="padding:10px;">
+		                                عضو
+		                            </th>
+		
+		                            <th style="padding:10px;">
+		                                جلسات
+		                            </th>
+		
+		                            <th style="padding:10px;">
+		                                مبلغ کل
+		                            </th>
+		
+		                            <th style="padding:10px;">
+		                                پرداخت‌شده
+		                            </th>
+		
+		                            <th style="padding:10px;">
+		                                بدهی
+		                            </th>
+		
+		                        </tr>
+		
+		                    </thead>
+		
+		                    <tbody>
+		
+		                        ${sortedMembers.map(
+		                            stat => `
+		                                <tr style="
+		                                    border-bottom:
+		                                    1px solid #eee;
+		                                ">
+		
+		                                    <td style="padding:10px;">
+		                                        ${stat.name}
+		                                    </td>
+		
+		                                    <td style="
+		                                        padding:10px;
+		                                        text-align:center;
+		                                    ">
+		                                        ${stat.sessions
+		                                            .toLocaleString('fa-IR')}
+		                                    </td>
+		
+		                                    <td style="padding:10px;">
+		                                        ${stat.amount
+		                                            .toLocaleString('fa-IR')}
+		                                        تومان
+		                                    </td>
+		
+		                                    <td style="
+		                                        padding:10px;
+		                                        color:#27ae60;
+		                                    ">
+		                                        ${stat.paid
+		                                            .toLocaleString('fa-IR')}
+		                                        تومان
+		                                    </td>
+		
+		                                    <td style="
+		                                        padding:10px;
+		                                        color:#e74c3c;
+		                                    ">
+		                                        ${stat.debt
+		                                            .toLocaleString('fa-IR')}
+		                                        تومان
+		                                    </td>
+		
+		                                </tr>
+		                            `
+		                        ).join('')}
+		
+		                    </tbody>
+		
+		                </table>
+		
+		            </div>
+		
+		        </div>
+		    `;
+		
+		
+		    document.body.appendChild(modal);
+		}
+		
+		function showAllDashboardGames() {
+
+		    const container =
+		        document.getElementById('globalReportsContainer');
+		
+		    const sessions = gameSessions || [];
+		
+		    const gameStats = {};
+		
+		    sessions.forEach(session => {
+		
+		        const gameName =
+		            session.gameName || 'بدون نام';
+		
+		        if (!gameStats[gameName]) {
+		            gameStats[gameName] = {
+		                sessions: 0,
+		                participants: 0,
+		                revenue: 0
+		            };
+		        }
+		
+		        gameStats[gameName].sessions++;
+		
+		        gameStats[gameName].participants +=
+		            session.players?.length || 0;
+		
+		        gameStats[gameName].revenue +=
+		            (session.players || []).reduce(
+		                (sum, player) =>
+		                    sum + Number(player.amount || 0),
+		                0
+		            );
+		    });
+		
+		
+		    const sortedGames =
+		        Object.entries(gameStats)
+		            .sort(
+		                (a, b) =>
+		                    b[1].sessions - a[1].sessions
+		            );
+		
+		
+		    const existing =
+		        document.getElementById(
+		            'allDashboardGamesModal'
+		        );
+		
+		    if (existing) {
+		        existing.remove();
+		    }
+		
+		
+		    const modal =
+		        document.createElement('div');
+		
+		    modal.id = 'allDashboardGamesModal';
+		
+		    modal.style.cssText = `
+		        position:fixed;
+		        inset:0;
+		        background:rgba(0,0,0,.55);
+		        display:flex;
+		        align-items:center;
+		        justify-content:center;
+		        z-index:9999;
+		        padding:20px;
+		    `;
+		
+		
+		    modal.innerHTML = `
+		        <div style="
+		            background:white;
+		            width:100%;
+		            max-width:800px;
+		            max-height:85vh;
+		            overflow:auto;
+		            border-radius:15px;
+		            padding:20px;
+		        ">
+		
+		            <div style="
+		                display:flex;
+		                justify-content:space-between;
+		                align-items:center;
+		                margin-bottom:15px;
+		            ">
+		
+		                <h3 style="margin:0;">
+		                    🎮 همه بازی‌ها
+		                </h3>
+		
+		                <button
+		                    onclick="
+		                        document
+		                            .getElementById('allDashboardGamesModal')
+		                            .remove()
+		                    "
+		                    style="
+		                        border:none;
+		                        background:#eee;
+		                        width:35px;
+		                        height:35px;
+		                        border-radius:50%;
+		                        cursor:pointer;
+		                        font-size:18px;
+		                    "
+		                >
+		                    ×
+		                </button>
+		
+		            </div>
+		
+		
+		            <div style="overflow-x:auto;">
+		
+		                <table style="
+		                    width:100%;
+		                    border-collapse:collapse;
+		                    font-size:13px;
+		                ">
+		
+		                    <thead>
+		
+		                        <tr style="
+		                            background:#f5f5f5;
+		                        ">
+		
+		                            <th style="padding:10px;">
+		                                بازی
+		                            </th>
+		
+		                            <th style="padding:10px;">
+		                                جلسات
+		                            </th>
+		
+		                            <th style="padding:10px;">
+		                                مشارکت
+		                            </th>
+		
+		                            <th style="padding:10px;">
+		                                مبلغ
+		                            </th>
+		
+		                        </tr>
+		
+		                    </thead>
+		
+		                    <tbody>
+		
+		                        ${sortedGames.map(
+		                            ([gameName, stat]) => `
+		                                <tr style="
+		                                    border-bottom:
+		                                    1px solid #eee;
+		                                ">
+		
+		                                    <td style="padding:10px;">
+		                                        🎮 ${gameName}
+		                                    </td>
+		
+		                                    <td style="
+		                                        padding:10px;
+		                                        text-align:center;
+		                                    ">
+		                                        ${stat.sessions
+		                                            .toLocaleString('fa-IR')}
+		                                    </td>
+		
+		                                    <td style="
+		                                        padding:10px;
+		                                        text-align:center;
+		                                    ">
+		                                        ${stat.participants
+		                                            .toLocaleString('fa-IR')}
+		                                    </td>
+		
+		                                    <td style="padding:10px;">
+		                                        ${stat.revenue
+		                                            .toLocaleString('fa-IR')}
+		                                        تومان
+		                                    </td>
+		
+		                                </tr>
+		                            `
+		                        ).join('')}
+		
+		                    </tbody>
+		
+		                </table>
+		
+		            </div>
+		
+		        </div>
+		    `;
+		
+		
+		    document.body.appendChild(modal);
 		}
 				
         async function initApp() {
