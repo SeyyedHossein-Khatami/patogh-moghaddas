@@ -2836,6 +2836,15 @@
         // --- بخش تولید گزارشات جامع ---
         async function openGlobalReports() {
 
+			const genderStats = {
+			    male: members.filter(member => member.gender === 'male').length,
+			    female: members.filter(member => member.gender === 'female').length,
+			    unknown: members.filter(
+			        member => !member.gender ||
+			                  (member.gender !== 'male' && member.gender !== 'female')
+			    ).length
+			};
+			
 		    const container = document.getElementById('globalReportsContainer');
 		
 		    if (!container) return;
@@ -3768,7 +3777,84 @@
 				        💰 لیست بدهکاران
 				    </button>
 				</div>
-		
+
+
+				<!-- ================================ -->
+				<!-- آمار بر اساس جنسیت -->
+				<!-- ================================ -->
+				
+				<div style="
+				    border:1px solid #eee;
+				    border-radius:12px;
+				    padding:15px;
+				    margin-bottom:20px;
+				">
+				
+				    <h3 style="margin-top:0;">
+				        👥 آمار اعضا بر اساس جنسیت
+				    </h3>
+				
+				    <div style="
+				        display:grid;
+				        grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+				        gap:12px;
+				    ">
+				
+				        <div style="
+				            background:#f5f9ff;
+				            border:1px solid #dbeafe;
+				            border-radius:10px;
+				            padding:15px;
+				            text-align:center;
+				        ">
+				            <div style="font-size:28px;">
+				                👨
+				            </div>
+				
+				            <div style="color:#666;margin-top:5px;">
+				                مرد
+				            </div>
+				
+				            <strong style="font-size:22px;">
+				                ${genderStats.male.toLocaleString('fa-IR')}
+				            </strong>
+				
+				            <div style="font-size:12px;color:#888;">
+				                نفر
+				            </div>
+				        </div>
+				
+				
+				        <div style="
+				            background:#fff7fb;
+				            border:1px solid #f5d5e5;
+				            border-radius:10px;
+				            padding:15px;
+				            text-align:center;
+				        ">
+				            <div style="font-size:28px;">
+				                👩
+				            </div>
+				
+				            <div style="color:#666;margin-top:5px;">
+				                زن
+				            </div>
+				
+				            <strong style="font-size:22px;">
+				                ${genderStats.female.toLocaleString('fa-IR')}
+				            </strong>
+				
+				            <div style="font-size:12px;color:#888;">
+				                نفر
+				            </div>
+				        </div>
+				
+				    </div>
+				
+				</div>
+
+				
+				
 		        <!-- ================================ -->
 		        <!-- آمار کارت‌ها -->
 		        <!-- ================================ -->
