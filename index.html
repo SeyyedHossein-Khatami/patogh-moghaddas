@@ -2834,765 +2834,957 @@
 		}
 		
         // --- بخش تولید گزارشات جامع ---
-        function openGlobalReports() {
+        async function openGlobalReports() {
 
 		    const container = document.getElementById('globalReportsContainer');
 		
-		    let totalVisits = 0;
-		    let gamesCount = {};
+		    if (!container) return;
 		
-		    let revAllTime = {
-		        total: 0,
-		        gold: 0,
-		        silver: 0,
-		        normal: 0
-		    };
+		    // مطمئن می‌شویم آخرین اطلاعات جلسات را داریم
+		    await loadGameSessions();
 		
-		    let revCurrentYear = {
-		        total: 0,
-		        gold: 0,
-		        silver: 0,
-		        normal: 0
-		    };
+		    const sessions = gameSessions || [];
 		
-		    let revCurrentMonth = {
-		        total: 0,
-		        gold: 0,
-		        silver: 0,
-		        normal: 0
-		    };
+		    // ==========================================
+		    // آمار کلی
+		    // ==========================================
 		
-		    let topMembersArr = [];
+		    const totalSessions = sessions.length;
 		
-		    // =========================================
-		    // آمار اعضا
-		    // =========================================
+		    const totalParticipants = sessions.reduce(
+		        (sum, session) =>
+		            sum + (session.players?.length || 0),
+		        0
+		    );
 		
-		    const totalMembers = members.length;
+		    const totalBilled = sessions.reduce(
+		        (sum, session) =>
+		            sum +
+		            (session.players || []).reduce(
+		                (playerSum, player) =>
+		                    playerSum + Number(player.amount || 0),
+		                0
+		            ),
+		        0
+		    );
 		
-		    const maleMembers = members.filter(
-		        m => m.gender === 'male'
-		    ).length;
+		    const totalPaid = sessions.reduce(
+		        (sum, session) =>
+		            sum +
+		            (session.players || []).reduce(
+		                (playerSum, player) =>
+		                    player.paymentStatus === 'paid'
+		                        ? playerSum + Number(player.amount || 0)
+		                        : playerSum,
+		                0
+		            ),
+		        0
+		    );
 		
-		    const femaleMembers = members.filter(
-		        m => m.gender === 'female'
-		    ).length;
-		
-		    const unknownGenderMembers = members.filter(
-		        m => !m.gender
-		    ).length;
-		
-			const goldMembers = members.filter(
-			    m => m.tier === 'gold'
-			).length;
-			
-			const silverMembers = members.filter(
-			    m => m.tier === 'silver'
-			).length;
-			
-			const normalMembers = members.filter(
-			    m => m.tier === 'normal'
-			).length;
-			
-			const beheshtiMembers = members.filter(
-			    m => m.tier === 'beheshti'
-			).length;
-		    // =========================================
-		    // تاریخ جاری
-		    // =========================================
-		
-		    const todayFA = new Date().toLocaleDateString('fa-IR');
-		    const todayParts = todayFA.split('/');
-		
-		    const currentYear = todayParts[0];
-		
-		    const currentMonth =
-		        todayParts.length > 1
-		            ? `${todayParts[0]}/${todayParts[1]}`
-		            : "";
+		    const totalDebt = sessions.reduce(
+		        (sum, session) =>
+		            sum +
+		            (session.players || []).reduce(
+		                (playerSum, player) =>
+		                    player.paymentStatus === 'debt'
+		                        ? playerSum + Number(player.amount || 0)
+		                        : playerSum,
+		                0
+		            ),
+		        0
+		    );
 		
 		
-		    // =========================================
-		    // بررسی اعضا و سوابق
-		    // =========================================
+		    // ==========================================
+		    // تاریخ امروز
+		    // ==========================================
 		
-		    members.forEach(m => {
+		    const now = new Date();
 		
-		        let memberVisits = 0;
-		        let memberTier = m.tier || 'normal';
-		
-		        m.visits.forEach(v => {
-		
-		            if (v.status === 'completed') {
-		
-		                totalVisits++;
-		                memberVisits++;
-		
-		                // -----------------------------
-		                // شمارش بازی‌ها
-		                // -----------------------------
-		
-		                let gList = v.games || [];
-		
-		                gList.forEach(g => {
-		                    gamesCount[g] =
-		                        (gamesCount[g] || 0) + 1;
-		                });
-		
-		
-		                // -----------------------------
-		                // محاسبه درآمد
-		                // -----------------------------
-		
-		                let cost = v.cost || 0;
-		
-		                let vDateParts = v.date.split('/');
-		
-		                let vYear = vDateParts[0];
-		
-		                let vMonth =
-		                    vDateParts.length > 1
-		                        ? `${vDateParts[0]}/${vDateParts[1]}`
-		                        : "";
-		
-		
-		                // کل
-		
-		                revAllTime.total += cost;
-		
-		                if (revAllTime[memberTier] !== undefined) {
-		                    revAllTime[memberTier] += cost;
-		                }
-		
-		
-		                // سال جاری
-		
-		                if (vYear === currentYear) {
-		
-		                    revCurrentYear.total += cost;
-		
-		                    if (revCurrentYear[memberTier] !== undefined) {
-		                        revCurrentYear[memberTier] += cost;
-		                    }
-		                }
-		
-		
-		                // ماه جاری
-		
-		                if (vMonth === currentMonth) {
-		
-		                    revCurrentMonth.total += cost;
-		
-		                    if (revCurrentMonth[memberTier] !== undefined) {
-		                        revCurrentMonth[memberTier] += cost;
-		                    }
-		                }
+		    const currentPersianDate =
+		        new Intl.DateTimeFormat(
+		            'fa-IR-u-ca-persian',
+		            {
+		                year: 'numeric',
+		                month: 'numeric',
+		                day: 'numeric'
 		            }
+		        ).format(now);
+		
+		    const currentPersianParts =
+		        new Intl.DateTimeFormat(
+		            'en-US-u-ca-persian',
+		            {
+		                year: 'numeric',
+		                month: 'numeric',
+		                day: 'numeric'
+		            }
+		        ).formatToParts(now);
+		
+		    const currentYear = Number(
+		        currentPersianParts.find(
+		            p => p.type === 'year'
+		        )?.value
+		    );
+		
+		    const currentMonth = Number(
+		        currentPersianParts.find(
+		            p => p.type === 'month'
+		        )?.value
+		    );
+		
+		
+		    // ==========================================
+		    // تشخیص سال / ماه جلسه
+		    // ==========================================
+		
+		    function getPersianDateParts(dateValue) {
+		
+		        if (!dateValue) return null;
+		
+		        const date = new Date(dateValue);
+		
+		        if (isNaN(date.getTime())) {
+		            return null;
+		        }
+		
+		        const parts =
+		            new Intl.DateTimeFormat(
+		                'en-US-u-ca-persian',
+		                {
+		                    year: 'numeric',
+		                    month: 'numeric',
+		                    day: 'numeric'
+		                }
+		            ).formatToParts(date);
+		
+		        return {
+		            year: Number(
+		                parts.find(p => p.type === 'year')?.value
+		            ),
+		            month: Number(
+		                parts.find(p => p.type === 'month')?.value
+		            ),
+		            day: Number(
+		                parts.find(p => p.type === 'day')?.value
+		            )
+		        };
+		    }
+		
+		
+		    // ==========================================
+		    // جلسات سال جاری
+		    // ==========================================
+		
+		    const currentYearSessions = sessions.filter(session => {
+		
+		        const dateParts =
+		            getPersianDateParts(session.startTime);
+		
+		        return dateParts &&
+		               dateParts.year === currentYear;
+		    });
+		
+		
+		    // ==========================================
+		    // جلسات ماه جاری
+		    // ==========================================
+		
+		    const currentMonthSessions =
+		        currentYearSessions.filter(session => {
+		
+		            const dateParts =
+		                getPersianDateParts(session.startTime);
+		
+		            return dateParts &&
+		                   dateParts.month === currentMonth;
 		        });
 		
 		
-		        if (memberVisits > 0) {
+		    // ==========================================
+		    // تابع محاسبه مالی مجموعه‌ای از جلسات
+		    // ==========================================
 		
-		            topMembersArr.push({
-		                name: m.name,
-		                count: memberVisits,
-		                tier: memberTier
+		    function calculateFinancialStats(sessionList) {
+		
+		        let billed = 0;
+		        let paid = 0;
+		        let debt = 0;
+		
+		        sessionList.forEach(session => {
+		
+		            (session.players || []).forEach(player => {
+		
+		                const amount =
+		                    Number(player.amount || 0);
+		
+		                billed += amount;
+		
+		                if (player.paymentStatus === 'paid') {
+		                    paid += amount;
+		                }
+		
+		                if (player.paymentStatus === 'debt') {
+		                    debt += amount;
+		                }
+		
 		            });
 		
+		        });
+		
+		        return {
+		            billed,
+		            paid,
+		            debt
+		        };
+		    }
+		
+		
+		    const yearFinancial =
+		        calculateFinancialStats(currentYearSessions);
+		
+		    const monthFinancial =
+		        calculateFinancialStats(currentMonthSessions);
+		
+		
+		    // ==========================================
+		    // تعداد مشارکت‌های سال و ماه
+		    // ==========================================
+		
+		    const currentYearParticipants =
+		        currentYearSessions.reduce(
+		            (sum, session) =>
+		                sum + (session.players?.length || 0),
+		            0
+		        );
+		
+		    const currentMonthParticipants =
+		        currentMonthSessions.reduce(
+		            (sum, session) =>
+		                sum + (session.players?.length || 0),
+		            0
+		        );
+		
+		
+		    // ==========================================
+		    // محبوب‌ترین بازی‌ها
+		    // ==========================================
+		
+		    const gameStats = {};
+		
+		    sessions.forEach(session => {
+		
+		        const gameName =
+		            session.gameName || 'بدون نام';
+		
+		        if (!gameStats[gameName]) {
+		            gameStats[gameName] = {
+		                sessions: 0,
+		                participants: 0,
+		                revenue: 0
+		            };
 		        }
+		
+		        // هر جلسه فقط یک بار شمرده می‌شود
+		        gameStats[gameName].sessions++;
+		
+		        gameStats[gameName].participants +=
+		            session.players?.length || 0;
+		
+		        gameStats[gameName].revenue +=
+		            (session.players || []).reduce(
+		                (sum, player) =>
+		                    sum + Number(player.amount || 0),
+		                0
+		            );
+		    });
+		
+		
+		    const sortedGames =
+		        Object.entries(gameStats)
+		            .sort(
+		                (a, b) =>
+		                    b[1].sessions - a[1].sessions
+		            );
+		
+		
+		    // ==========================================
+		    // آمار اعضا
+		    // ==========================================
+		
+		    const memberStats = {};
+		
+		    sessions.forEach(session => {
+		
+		        (session.players || []).forEach(player => {
+		
+		            const memberId = String(
+		                player.memberId
+		            );
+		
+		            if (!memberStats[memberId]) {
+		
+		                const member =
+		                    members.find(
+		                        m =>
+		                            String(m.id) === memberId
+		                    );
+		
+		                memberStats[memberId] = {
+		                    name: member
+		                        ? member.name
+		                        : 'عضو حذف‌شده',
+		
+		                    sessions: 0,
+		                    amount: 0,
+		                    paid: 0,
+		                    debt: 0
+		                };
+		            }
+		
+		
+		            const stat =
+		                memberStats[memberId];
+		
+		            stat.sessions++;
+		
+		            const amount =
+		                Number(player.amount || 0);
+		
+		            stat.amount += amount;
+		
+		            if (player.paymentStatus === 'paid') {
+		                stat.paid += amount;
+		            }
+		
+		            if (player.paymentStatus === 'debt') {
+		                stat.debt += amount;
+		            }
+		
+		        });
 		
 		    });
 		
 		
-		    // =========================================
-		    // مرتب‌سازی بازی‌ها
-		    // =========================================
-		
-		    let sortedGames =
-		        Object.keys(gamesCount)
-		            .sort((a, b) =>
-		                gamesCount[b] - gamesCount[a]
+		    const sortedMembers =
+		        Object.values(memberStats)
+		            .sort(
+		                (a, b) =>
+		                    b.sessions - a.sessions
 		            );
 		
 		
-		    let gamesHtml =
-		        sortedGames.length > 0
+		    // ==========================================
+		    // آمار کارت‌ها
+		    // ==========================================
 		
-		            ? sortedGames.map(g => `
-		                <div class="report-row">
-		                    <span>🎮 ${g}</span>
-		                    <strong>${gamesCount[g]} بار</strong>
-		                </div>
-		            `).join('')
+		    const tierStats = {
+		        beheshti: {
+		            label: 'کارت بهشتی',
+		            sessions: 0,
+		            amount: 0
+		        },
 		
-		            : `
-		                <p style="
-		                    font-size:12px;
-		                    color:gray;
-		                    text-align:center;
-		                ">
-		                    هنوز بازی ثبت نشده است.
-		                </p>
-		            `;
+		        gold: {
+		            label: 'کارت طلایی',
+		            sessions: 0,
+		            amount: 0
+		        },
 		
+		        silver: {
+		            label: 'کارت نقره‌ای',
+		            sessions: 0,
+		            amount: 0
+		        },
 		
-		    // =========================================
-		    // مرتب‌سازی اعضای پرتردد
-		    // =========================================
-		
-		    topMembersArr.sort(
-		        (a, b) => b.count - a.count
-		    );
-		
-		
-		    let membersHtml =
-		        topMembersArr
-		            .slice(0, 10)
-		            .map((tm, idx) => `
-		                <div class="report-row">
-		                    <span>
-		                        ${idx + 1}. ${tm.name}
-		                    </span>
-		
-		                    <strong>
-		                        ${tm.count} جلسه
-		                    </strong>
-		                </div>
-		            `)
-		            .join('');
+		        normal: {
+		            label: 'عضو عادی',
+		            sessions: 0,
+		            amount: 0
+		        }
+		    };
 		
 		
-		    // =========================================
-		    // فرمت پول
-		    // =========================================
+		    sessions.forEach(session => {
 		
-		    const fM = num =>
-		        num.toLocaleString('fa-IR');
+		        (session.players || []).forEach(player => {
+		
+		            const tier =
+		                tierStats[player.tier]
+		                    ? player.tier
+		                    : 'normal';
+		
+		            tierStats[tier].sessions++;
+		
+		            tierStats[tier].amount +=
+		                Number(player.amount || 0);
+		        });
+		
+		    });
 		
 		
-		    // =========================================
+		    // ==========================================
 		    // HTML داشبورد
-		    // =========================================
+		    // ==========================================
 		
 		    container.innerHTML = `
 		
-		        <!-- ================================= -->
-		        <!-- آمار اعضای کافه -->
-		        <!-- ================================= -->
+		        <!-- ================================ -->
+		        <!-- عنوان -->
+		        <!-- ================================ -->
 		
-		        <div class="report-section">
+		        <div style="
+		            margin-bottom:20px;
+		        ">
 		
-		            <h4 class="report-title">
-		                👥 آمار اعضای کافه
-		            </h4>
-		
+		            <h2 style="
+		                margin:0 0 6px 0;
+		            ">
+		                📊 داشبورد و گزارشات جامع
+		            </h2>
 		
 		            <div style="
-		                display:grid;
-		                grid-template-columns:repeat(3, 1fr);
-		                gap:10px;
+		                color:#777;
+		                font-size:12px;
+		            ">
+		                آخرین بروزرسانی:
+		                ${currentPersianDate}
+		            </div>
+		
+		        </div>
+		
+		
+		        <!-- ================================ -->
+		        <!-- آمار کلی -->
+		        <!-- ================================ -->
+		
+		        <div style="
+		            display:grid;
+		            grid-template-columns:repeat(
+		                auto-fit,
+		                minmax(150px, 1fr)
+		            );
+		            gap:12px;
+		            margin-bottom:20px;
+		        ">
+		
+		            <div class="report-stat-card">
+		                <div class="report-stat-title">
+		                    🎮 کل جلسات
+		                </div>
+		
+		                <div class="report-stat-value">
+		                    ${totalSessions.toLocaleString('fa-IR')}
+		                </div>
+		            </div>
+		
+		
+		            <div class="report-stat-card">
+		                <div class="report-stat-title">
+		                    👥 کل مشارکت‌ها
+		                </div>
+		
+		                <div class="report-stat-value">
+		                    ${totalParticipants.toLocaleString('fa-IR')}
+		                </div>
+		            </div>
+		
+		
+		            <div class="report-stat-card">
+		                <div class="report-stat-title">
+		                    💰 کل صورتحساب
+		                </div>
+		
+		                <div class="report-stat-value">
+		                    ${totalBilled.toLocaleString('fa-IR')}
+		                    <small>تومان</small>
+		                </div>
+		            </div>
+		
+		
+		            <div class="report-stat-card">
+		                <div class="report-stat-title">
+		                    ✅ پرداخت‌شده
+		                </div>
+		
+		                <div class="report-stat-value"
+		                     style="color:#27ae60;">
+		                    ${totalPaid.toLocaleString('fa-IR')}
+		                    <small>تومان</small>
+		                </div>
+		            </div>
+		
+		
+		            <div class="report-stat-card">
+		                <div class="report-stat-title">
+		                    ⚠️ بدهی جاری
+		                </div>
+		
+		                <div class="report-stat-value"
+		                     style="color:#e74c3c;">
+		                    ${totalDebt.toLocaleString('fa-IR')}
+		                    <small>تومان</small>
+		                </div>
+		            </div>
+		
+		        </div>
+		
+		
+		        <!-- ================================ -->
+		        <!-- سال و ماه جاری -->
+		        <!-- ================================ -->
+		
+		        <div style="
+		            display:grid;
+		            grid-template-columns:
+		                repeat(auto-fit, minmax(280px, 1fr));
+		            gap:15px;
+		            margin-bottom:20px;
+		        ">
+		
+		            <div style="
+		                border:1px solid #eee;
+		                border-radius:12px;
+		                padding:15px;
+		                background:#fafafa;
 		            ">
 		
-		                <!-- کل اعضا -->
+		                <h3 style="margin-top:0;">
+		                    📅 سال جاری
+		                </h3>
 		
-		                <div style="
-		                    background:#f8f9fa;
-		                    border:1px solid #e5e8e8;
-		                    border-radius:10px;
-		                    padding:15px 8px;
-		                    text-align:center;
-		                ">
+		                <div style="line-height:2;">
 		
-		                    <div style="
-		                        font-size:25px;
-		                    ">
-		                        👥
-		                    </div>
+		                    جلسات:
+		                    <strong>
+		                        ${currentYearSessions.length
+		                            .toLocaleString('fa-IR')}
+		                    </strong>
 		
-		                    <div style="
-		                        font-size:12px;
-		                        color:#777;
-		                        margin-top:5px;
-		                    ">
-		                        کل اعضا
-		                    </div>
+		                    <br>
 		
-		                    <div style="
-		                        font-size:22px;
-		                        font-weight:bold;
-		                        color:var(--lapis-lazuli);
-		                        margin-top:5px;
-		                    ">
-		                        ${fM(totalMembers)}
-		                    </div>
+		                    مشارکت:
+		                    <strong>
+		                        ${currentYearParticipants
+		                            .toLocaleString('fa-IR')}
+		                    </strong>
 		
-		                    <div style="
-		                        font-size:10px;
-		                        color:#777;
-		                    ">
-		                        نفر
-		                    </div>
+		                    <br>
 		
-		                </div>
+		                    صورتحساب:
+		                    <strong>
+		                        ${yearFinancial.billed
+		                            .toLocaleString('fa-IR')}
+		                        تومان
+		                    </strong>
 		
+		                    <br>
 		
-		                <!-- مردان -->
+		                    پرداخت‌شده:
+		                    <strong style="color:#27ae60;">
+		                        ${yearFinancial.paid
+		                            .toLocaleString('fa-IR')}
+		                        تومان
+		                    </strong>
 		
-		                <div style="
-		                    background:#f8f9fa;
-		                    border:1px solid #e5e8e8;
-		                    border-radius:10px;
-		                    padding:15px 8px;
-		                    text-align:center;
-		                ">
+		                    <br>
 		
-		                    <div style="
-		                        font-size:25px;
-		                    ">
-		                        👨
-		                    </div>
-		
-		                    <div style="
-		                        font-size:12px;
-		                        color:#777;
-		                        margin-top:5px;
-		                    ">
-		                        آقایان
-		                    </div>
-		
-		                    <div style="
-		                        font-size:22px;
-		                        font-weight:bold;
-		                        color:#2980b9;
-		                        margin-top:5px;
-		                    ">
-		                        ${fM(maleMembers)}
-		                    </div>
-		
-		                    <div style="
-		                        font-size:10px;
-		                        color:#777;
-		                    ">
-		                        نفر
-		                    </div>
-		
-		                </div>
-		
-		
-		                <!-- زنان -->
-		
-		                <div style="
-		                    background:#f8f9fa;
-		                    border:1px solid #e5e8e8;
-		                    border-radius:10px;
-		                    padding:15px 8px;
-		                    text-align:center;
-		                ">
-		
-		                    <div style="
-		                        font-size:25px;
-		                    ">
-		                        👩
-		                    </div>
-		
-		                    <div style="
-		                        font-size:12px;
-		                        color:#777;
-		                        margin-top:5px;
-		                    ">
-		                        بانوان
-		                    </div>
-		
-		                    <div style="
-		                        font-size:22px;
-		                        font-weight:bold;
-		                        color:#c0392b;
-		                        margin-top:5px;
-		                    ">
-		                        ${fM(femaleMembers)}
-		                    </div>
-		
-		                    <div style="
-		                        font-size:10px;
-		                        color:#777;
-		                    ">
-		                        نفر
-		                    </div>
+		                    بدهی:
+		                    <strong style="color:#e74c3c;">
+		                        ${yearFinancial.debt
+		                            .toLocaleString('fa-IR')}
+		                        تومان
+		                    </strong>
 		
 		                </div>
 		
 		            </div>
 		
 		
-		            <!-- جنسیت نامشخص -->
+		            <div style="
+		                border:1px solid #eee;
+		                border-radius:12px;
+		                padding:15px;
+		                background:#fafafa;
+		            ">
+		
+		                <h3 style="margin-top:0;">
+		                    📆 ماه جاری
+		                </h3>
+		
+		                <div style="line-height:2;">
+		
+		                    جلسات:
+		                    <strong>
+		                        ${currentMonthSessions.length
+		                            .toLocaleString('fa-IR')}
+		                    </strong>
+		
+		                    <br>
+		
+		                    مشارکت:
+		                    <strong>
+		                        ${currentMonthParticipants
+		                            .toLocaleString('fa-IR')}
+		                    </strong>
+		
+		                    <br>
+		
+		                    صورتحساب:
+		                    <strong>
+		                        ${monthFinancial.billed
+		                            .toLocaleString('fa-IR')}
+		                        تومان
+		                    </strong>
+		
+		                    <br>
+		
+		                    پرداخت‌شده:
+		                    <strong style="color:#27ae60;">
+		                        ${monthFinancial.paid
+		                            .toLocaleString('fa-IR')}
+		                        تومان
+		                    </strong>
+		
+		                    <br>
+		
+		                    بدهی:
+		                    <strong style="color:#e74c3c;">
+		                        ${monthFinancial.debt
+		                            .toLocaleString('fa-IR')}
+		                        تومان
+		                    </strong>
+		
+		                </div>
+		
+		            </div>
+		
+		        </div>
+		
+		
+		        <!-- ================================ -->
+		        <!-- آمار بازی‌ها -->
+		        <!-- ================================ -->
+		
+		        <div style="
+		            border:1px solid #eee;
+		            border-radius:12px;
+		            padding:15px;
+		            margin-bottom:20px;
+		        ">
+		
+		            <h3 style="margin-top:0;">
+		                🎮 آمار بازی‌ها
+		            </h3>
 		
 		            ${
-		                unknownGenderMembers > 0
+		                sortedGames.length === 0
 		
 		                ? `
 		                    <div style="
-		                        margin-top:10px;
-		                        padding:10px;
 		                        text-align:center;
-		                        background:#f8f9fa;
-		                        border:1px solid #e5e8e8;
-		                        border-radius:8px;
-		                        font-size:12px;
-		                        color:#777;
+		                        padding:20px;
+		                        color:#888;
 		                    ">
-		                        👤 جنسیت مشخص نشده:
-		                        <strong>
-		                            ${fM(unknownGenderMembers)}
-		                        </strong>
-		                        نفر
+		                        هنوز جلسه‌ای ثبت نشده است.
 		                    </div>
-		                `
+		                  `
 		
-		                : ''
+		                : `
+		
+		                    <div style="
+		                        overflow-x:auto;
+		                    ">
+		
+		                        <table style="
+		                            width:100%;
+		                            border-collapse:collapse;
+		                            font-size:13px;
+		                        ">
+		
+		                            <thead>
+		
+		                                <tr style="
+		                                    background:#f5f5f5;
+		                                ">
+		
+		                                    <th style="padding:10px;">
+		                                        بازی
+		                                    </th>
+		
+		                                    <th style="padding:10px;">
+		                                        تعداد جلسات
+		                                    </th>
+		
+		                                    <th style="padding:10px;">
+		                                        مشارکت
+		                                    </th>
+		
+		                                    <th style="padding:10px;">
+		                                        مبلغ
+		                                    </th>
+		
+		                                </tr>
+		
+		                            </thead>
+		
+		                            <tbody>
+		
+		                                ${sortedGames.map(
+		                                    ([gameName, stat]) => `
+		                                        <tr
+		                                            style="
+		                                                border-bottom:
+		                                                1px solid #eee;
+		                                            "
+		                                        >
+		
+		                                            <td style="padding:10px;">
+		                                                🎮 ${gameName}
+		                                            </td>
+		
+		                                            <td style="
+		                                                padding:10px;
+		                                                text-align:center;
+		                                            ">
+		                                                ${stat.sessions
+		                                                    .toLocaleString('fa-IR')}
+		                                            </td>
+		
+		                                            <td style="
+		                                                padding:10px;
+		                                                text-align:center;
+		                                            ">
+		                                                ${stat.participants
+		                                                    .toLocaleString('fa-IR')}
+		                                            </td>
+		
+		                                            <td style="
+		                                                padding:10px;
+		                                            ">
+		                                                ${stat.revenue
+		                                                    .toLocaleString('fa-IR')}
+		                                                تومان
+		                                            </td>
+		
+		                                        </tr>
+		                                    `
+		                                ).join('')}
+		
+		                            </tbody>
+		
+		                        </table>
+		
+		                    </div>
+		                  `
 		            }
 		
 		        </div>
 		
-				<!-- آمار اعضا بر اساس نوع کارت -->
-
-				<div style="
-				    margin-top:15px;
-				    padding-top:12px;
-				    border-top:1px solid #eee;
-				">
-				
-				    <h5 style="
-				        margin:0 0 10px 0;
-				        color:var(--text-light);
-				        font-size:13px;
-				    ">
-				        💳 اعضا بر اساس نوع کارت
-				    </h5>
-				
-				    <div style="
-				        display:grid;
-				        grid-template-columns:repeat(2, 1fr);
-				        gap:8px;
-				    ">
-				
-				        <div style="
-				            padding:10px;
-				            border-radius:8px;
-				            background:#fff8e6;
-				            border:1px solid #f1d58a;
-				            text-align:center;
-				        ">
-				            <div>🟡 کارت طلایی</div>
-				
-				            <strong style="
-				                display:block;
-				                margin-top:5px;
-				                font-size:18px;
-				            ">
-				                ${fM(goldMembers)}
-				            </strong>
-				
-				            <small>نفر</small>
-				        </div>
-				
-				
-				        <div style="
-				            padding:10px;
-				            border-radius:8px;
-				            background:#f4f4f4;
-				            border:1px solid #d5d5d5;
-				            text-align:center;
-				        ">
-				            <div>⚪ کارت نقره‌ای</div>
-				
-				            <strong style="
-				                display:block;
-				                margin-top:5px;
-				                font-size:18px;
-				            ">
-				                ${fM(silverMembers)}
-				            </strong>
-				
-				            <small>نفر</small>
-				        </div>
-				
-				
-				        <div style="
-				            padding:10px;
-				            border-radius:8px;
-				            background:#eef6ff;
-				            border:1px solid #c8dff5;
-				            text-align:center;
-				        ">
-				            <div>🔵 عضو عادی</div>
-				
-				            <strong style="
-				                display:block;
-				                margin-top:5px;
-				                font-size:18px;
-				            ">
-				                ${fM(normalMembers)}
-				            </strong>
-				
-				            <small>نفر</small>
-				        </div>
-				
-				
-				        <div style="
-				            padding:10px;
-				            border-radius:8px;
-				            background:#eefaf1;
-				            border:1px solid #c9e8d0;
-				            text-align:center;
-				        ">
-				            <div>🟢 کارت بهشتی</div>
-				
-				            <strong style="
-				                display:block;
-				                margin-top:5px;
-				                font-size:18px;
-				            ">
-				                ${fM(beheshtiMembers)}
-				            </strong>
-				
-				            <small>نفر</small>
-				        </div>
-				
-				    </div>
-				
-				</div>
-		        <!-- ================================= -->
-		        <!-- آمار کلی حضور -->
-		        <!-- ================================= -->
 		
-		        <div class="report-section">
+		        <!-- ================================ -->
+		        <!-- اعضای پرتکرار -->
+		        <!-- ================================ -->
 		
-		            <h4 class="report-title">
-		                👥 آمار کلی حضور
-		            </h4>
+		        <div style="
+		            border:1px solid #eee;
+		            border-radius:12px;
+		            padding:15px;
+		            margin-bottom:20px;
+		        ">
 		
-		            <div class="report-row"
-		                style="
-		                    font-size:15px;
-		                    font-weight:bold;
-		                    color:var(--lapis-lazuli);
-		                "
-		            >
+		            <h3 style="margin-top:0;">
+		                👑 اعضا بر اساس تعداد جلسات
+		            </h3>
 		
-		                <span>
-		                    مجموع کل دفعات حضور در کافه:
-		                </span>
+		            ${
+		                sortedMembers.length === 0
 		
-		                <span>
-		                    ${fM(totalVisits)} جلسه
-		                </span>
-		
-		            </div>
-		
-		
-		            <div style="
-		                margin-top:15px;
-		                border-top:1px solid #eee;
-		                padding-top:10px;
-		            ">
-		
-		                <h5 style="
-		                    margin:0 0 10px 0;
-		                    color:var(--text-light);
-		                    font-size:13px;
-		                ">
-		                    🏆 ۱۰ مشتری وفادار و پرتردد:
-		                </h5>
-		
-		                ${
-		                    membersHtml ||
-		                    `
-		                    <p style="
-		                        font-size:12px;
-		                        color:gray;
+		                ? `
+		                    <div style="
+		                        text-align:center;
+		                        padding:20px;
+		                        color:#888;
 		                    ">
-		                        داده ای موجود نیست.
-		                    </p>
-		                    `
-		                }
+		                        هنوز اطلاعاتی وجود ندارد.
+		                    </div>
+		                  `
 		
-		            </div>
+		                : `
 		
-		        </div>
+		                    <div style="
+		                        overflow-x:auto;
+		                    ">
 		
+		                        <table style="
+		                            width:100%;
+		                            border-collapse:collapse;
+		                            font-size:13px;
+		                        ">
 		
-		        <!-- ================================= -->
-		        <!-- گزارش مالی -->
-		        <!-- ================================= -->
+		                            <thead>
 		
-		        <div class="report-section">
+		                                <tr style="
+		                                    background:#f5f5f5;
+		                                ">
 		
-		            <h4 class="report-title">
-		                💰 گزارش مالی و کارکرد کافه
-		            </h4>
+		                                    <th style="padding:10px;">
+		                                        عضو
+		                                    </th>
 		
+		                                    <th style="padding:10px;">
+		                                        جلسات
+		                                    </th>
 		
-		            <!-- ماه جاری -->
+		                                    <th style="padding:10px;">
+		                                        مبلغ کل
+		                                    </th>
 		
-		            <div style="
-		                background:#f8f9fa;
-		                padding:10px;
-		                border-radius:8px;
-		                border:1px solid #e5e8e8;
-		                margin-bottom:10px;
-		            ">
+		                                    <th style="padding:10px;">
+		                                        پرداخت‌شده
+		                                    </th>
 		
-		                <div style="
-		                    font-size:12px;
-		                    font-weight:bold;
-		                    color:gray;
-		                    text-align:center;
-		                    margin-bottom:5px;
-		                ">
-		                    درآمد ماه جاری (${currentMonth})
-		                </div>
+		                                    <th style="padding:10px;">
+		                                        بدهی
+		                                    </th>
 		
-		                <div class="rev-total">
-		                    ${fM(revCurrentMonth.total)} تومان
-		                </div>
+		                                </tr>
 		
-		                <div style="text-align:center;">
+		                            </thead>
 		
-		                    <span class="tier-rev tr-g">
-		                        طلایی:
-		                        ${fM(revCurrentMonth.gold)}
-		                    </span>
+		                            <tbody>
 		
-		                    <span class="tier-rev tr-s">
-		                        نقره ای:
-		                        ${fM(revCurrentMonth.silver)}
-		                    </span>
+		                                ${sortedMembers
+		                                    .slice(0, 10)
+		                                    .map(stat => `
 		
-		                    <span class="tier-rev tr-n">
-		                        عادی:
-		                        ${fM(revCurrentMonth.normal)}
-		                    </span>
+		                                        <tr style="
+		                                            border-bottom:
+		                                            1px solid #eee;
+		                                        ">
 		
-		                </div>
+		                                            <td style="padding:10px;">
+		                                                ${stat.name}
+		                                            </td>
 		
-		            </div>
+		                                            <td style="
+		                                                padding:10px;
+		                                                text-align:center;
+		                                            ">
+		                                                ${stat.sessions
+		                                                    .toLocaleString('fa-IR')}
+		                                            </td>
 		
+		                                            <td style="padding:10px;">
+		                                                ${stat.amount
+		                                                    .toLocaleString('fa-IR')}
+		                                                تومان
+		                                            </td>
 		
-		            <!-- سال جاری -->
+		                                            <td style="
+		                                                padding:10px;
+		                                                color:#27ae60;
+		                                            ">
+		                                                ${stat.paid
+		                                                    .toLocaleString('fa-IR')}
+		                                                تومان
+		                                            </td>
 		
-		            <div style="
-		                background:#f8f9fa;
-		                padding:10px;
-		                border-radius:8px;
-		                border:1px solid #e5e8e8;
-		                margin-bottom:10px;
-		            ">
+		                                            <td style="
+		                                                padding:10px;
+		                                                color:#e74c3c;
+		                                            ">
+		                                                ${stat.debt
+		                                                    .toLocaleString('fa-IR')}
+		                                                تومان
+		                                            </td>
 		
-		                <div style="
-		                    font-size:12px;
-		                    font-weight:bold;
-		                    color:gray;
-		                    text-align:center;
-		                    margin-bottom:5px;
-		                ">
-		                    درآمد سال جاری (${currentYear})
-		                </div>
+		                                        </tr>
 		
-		                <div class="rev-total"
-		                    style="color:#2980b9;"
-		                >
-		                    ${fM(revCurrentYear.total)} تومان
-		                </div>
+		                                    `).join('')}
 		
-		                <div style="text-align:center;">
+		                            </tbody>
 		
-		                    <span class="tier-rev tr-g">
-		                        طلایی:
-		                        ${fM(revCurrentYear.gold)}
-		                    </span>
+		                        </table>
 		
-		                    <span class="tier-rev tr-s">
-		                        نقره ای:
-		                        ${fM(revCurrentYear.silver)}
-		                    </span>
-		
-		                    <span class="tier-rev tr-n">
-		                        عادی:
-		                        ${fM(revCurrentYear.normal)}
-		                    </span>
-		
-		                </div>
-		
-		            </div>
-		
-		
-		            <!-- کل -->
-		
-		            <div style="
-		                background:#f8f9fa;
-		                padding:10px;
-		                border-radius:8px;
-		                border:1px solid #e5e8e8;
-		            ">
-		
-		                <div style="
-		                    font-size:12px;
-		                    font-weight:bold;
-		                    color:gray;
-		                    text-align:center;
-		                    margin-bottom:5px;
-		                ">
-		                    مجموع درآمد کل سیستم (تا کنون)
-		                </div>
-		
-		                <div class="rev-total"
-		                    style="color:#8e44ad;"
-		                >
-		                    ${fM(revAllTime.total)} تومان
-		                </div>
-		
-		                <div style="text-align:center;">
-		
-		                    <span class="tier-rev tr-g">
-		                        طلایی:
-		                        ${fM(revAllTime.gold)}
-		                    </span>
-		
-		                    <span class="tier-rev tr-s">
-		                        نقره ای:
-		                        ${fM(revAllTime.silver)}
-		                    </span>
-		
-		                    <span class="tier-rev tr-n">
-		                        عادی:
-		                        ${fM(revAllTime.normal)}
-		                    </span>
-		
-		                </div>
-		
-		            </div>
+		                    </div>
+		                  `
+		            }
 		
 		        </div>
 		
 		
-		        <!-- ================================= -->
-		        <!-- محبوب‌ترین بازی‌ها -->
-		        <!-- ================================= -->
+		        <!-- ================================ -->
+		        <!-- آمار کارت‌ها -->
+		        <!-- ================================ -->
 		
-		        <div class="report-section">
+		        <div style="
+		            border:1px solid #eee;
+		            border-radius:12px;
+		            padding:15px;
+		        ">
 		
-		            <h4 class="report-title">
-		                🎲 محبوب‌ترین بازی‌ها
-		            </h4>
+		            <h3 style="margin-top:0;">
+		                💳 آمار بر اساس نوع عضویت
+		            </h3>
 		
-		            ${gamesHtml}
+		            <div style="
+		                display:grid;
+		                grid-template-columns:
+		                    repeat(auto-fit, minmax(150px, 1fr));
+		                gap:10px;
+		            ">
+		
+		                ${Object.values(tierStats).map(stat => `
+		
+		                    <div style="
+		                        background:#f8f8f8;
+		                        border-radius:10px;
+		                        padding:12px;
+		                    ">
+		
+		                        <strong>
+		                            ${stat.label}
+		                        </strong>
+		
+		                        <div style="
+		                            margin-top:7px;
+		                            font-size:12px;
+		                        ">
+		
+		                            مشارکت:
+		                            ${stat.sessions
+		                                .toLocaleString('fa-IR')}
+		
+		                        </div>
+		
+		                        <div style="
+		                            margin-top:4px;
+		                            font-size:12px;
+		                        ">
+		
+		                            مبلغ:
+		                            ${stat.amount
+		                                .toLocaleString('fa-IR')}
+		                            تومان
+		
+		                        </div>
+		
+		                    </div>
+		
+		                `).join('')}
+		
+		            </div>
 		
 		        </div>
 		
 		    `;
 		
 		
-		    document.getElementById('reportsModal').style.display = 'flex';
+		    // نمایش مودال
+		    document.getElementById(
+		        'reportsModal'
+		    ).style.display = 'flex';
 		}
 
 		function getActiveGameOptions() {
