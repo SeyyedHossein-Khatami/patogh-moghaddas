@@ -280,6 +280,17 @@
     <div class="container">
         <!-- دکمه داشبورد گزارشات جامع -->
         <button class="btn-dashboard" onclick="openGlobalReports()">📊 داشبورد و گزارشات جامع کافه</button>
+		<button
+		    class="btn-primary"
+		    onclick="openGameSessionModal()"
+		    style="
+		        margin-bottom:20px;
+		        background:#8e44ad;
+		        font-size:15px;
+		    "
+		>
+		    🎮 ثبت جلسه بازی
+		</button>
 		<div class="game-management-box">
 
 		    <div
@@ -414,7 +425,269 @@
 
         <button class="btn-global-clear" onclick="clearAllSystemHistory()">⚠️ پاکسازی تاریخچه و سوابق کل اعضای سیستم</button>
     </div>
+	<!-- ========================================= -->
+	<!-- پاپ آپ ثبت جلسه بازی -->
+	<!-- ========================================= -->
 	
+	<div
+	    class="modal-overlay"
+	    id="gameSessionModal"
+	    onclick="closeModal(event, 'gameSessionModal')"
+	>
+	    <div
+	        class="modal-content"
+	        onclick="event.stopPropagation()"
+	    >
+	
+	        <div class="modal-header">
+	
+	            <h2 class="modal-title">
+	                🎮 ثبت جلسه بازی
+	            </h2>
+	
+	            <button
+	                class="close-btn"
+	                onclick="closeModal(true, 'gameSessionModal')"
+	            >
+	                ×
+	            </button>
+	
+	        </div>
+	
+	
+	        <!-- انتخاب بازی -->
+	
+	        <div class="visit-form">
+	
+	            <label
+	                style="
+	                    display:block;
+	                    text-align:right;
+	                    font-size:12px;
+	                    font-weight:bold;
+	                    margin-bottom:7px;
+	                "
+	            >
+	                🎮 انتخاب بازی
+	            </label>
+	
+	            <select
+	                id="gameSessionGame"
+	                class="formal-input"
+	            >
+	                <option value="">
+	                    انتخاب بازی...
+	                </option>
+	            </select>
+	
+	        </div>
+	
+	
+	        <!-- ساعت بازی -->
+	
+	        <div
+	            class="visit-form"
+	            style="text-align:right;"
+	        >
+	
+	            <h3
+	                style="
+	                    margin-top:0;
+	                    color:var(--lapis-lazuli);
+	                    font-size:14px;
+	                "
+	            >
+	                ⏱ زمان بازی
+	            </h3>
+	
+	            <div
+	                style="
+	                    display:flex;
+	                    gap:10px;
+	                "
+	            >
+	
+	                <div style="flex:1;">
+	
+	                    <label
+	                        style="
+	                            display:block;
+	                            font-size:11px;
+	                            margin-bottom:5px;
+	                        "
+	                    >
+	                        ساعت شروع
+	                    </label>
+	
+	                    <input
+	                        type="time"
+	                        id="gameSessionStart"
+	                        class="formal-input"
+	                        onchange="updateGameSessionPreview()"
+	                    >
+	
+	                </div>
+	
+	
+	                <div style="flex:1;">
+	
+	                    <label
+	                        style="
+	                            display:block;
+	                            font-size:11px;
+	                            margin-bottom:5px;
+	                        "
+	                    >
+	                        ساعت پایان
+	                    </label>
+	
+	                    <input
+	                        type="time"
+	                        id="gameSessionEnd"
+	                        class="formal-input"
+	                        onchange="updateGameSessionPreview()"
+	                    >
+	
+	                </div>
+	
+	            </div>
+	
+	
+	            <div
+	                id="gameSessionDuration"
+	                style="
+	                    margin-top:12px;
+	                    padding:10px;
+	                    background:#f5eef8;
+	                    border-radius:8px;
+	                    text-align:center;
+	                    color:#8e44ad;
+	                    font-size:13px;
+	                    font-weight:bold;
+	                "
+	            >
+	                مدت بازی: -- دقیقه
+	            </div>
+	
+	        </div>
+	
+	
+	        <!-- جستجوی اعضا -->
+	
+	        <div class="visit-form">
+	
+	            <h3
+	                style="
+	                    margin-top:0;
+	                    color:var(--lapis-lazuli);
+	                    font-size:14px;
+	                "
+	            >
+	                👥 انتخاب اعضای بازی
+	            </h3>
+	
+	
+	            <input
+	                type="text"
+	                id="gameSessionMemberSearch"
+	                class="formal-input"
+	                placeholder="🔍 جستجوی عضو برای اضافه کردن..."
+	                oninput="renderGameSessionMemberPicker()"
+	            >
+	
+	
+	            <div
+	                id="gameSessionMemberPicker"
+	                style="
+	                    margin-top:10px;
+	                    max-height:220px;
+	                    overflow-y:auto;
+	                "
+	            >
+	            </div>
+	
+	        </div>
+	
+	
+	        <!-- اعضای انتخاب شده -->
+	
+	        <div class="visit-form">
+	
+	            <div
+	                style="
+	                    display:flex;
+	                    justify-content:space-between;
+	                    align-items:center;
+	                    margin-bottom:10px;
+	                "
+	            >
+	
+	                <strong
+	                    style="
+	                        color:var(--lapis-lazuli);
+	                        font-size:13px;
+	                    "
+	                >
+	                    اعضای انتخاب‌شده
+	                </strong>
+	
+	                <span
+	                    id="gameSessionSelectedCount"
+	                    style="
+	                        font-size:11px;
+	                        color:#8e44ad;
+	                    "
+	                >
+	                    ۰ نفر
+	                </span>
+	
+	            </div>
+	
+	
+	            <div
+	                id="gameSessionSelectedMembers"
+	            >
+	                <div
+	                    style="
+	                        text-align:center;
+	                        color:#999;
+	                        font-size:12px;
+	                    "
+	                >
+	                    هنوز عضوی انتخاب نشده است.
+	                </div>
+	            </div>
+	
+	        </div>
+	
+	
+	        <!-- دکمه ثبت -->
+	
+	        <button
+	            class="btn-primary"
+	            onclick="saveGameSession()"
+	            style="
+	                background:#8e44ad;
+	                margin-bottom:10px;
+	            "
+	        >
+	            💾 ثبت نهایی جلسه بازی
+	        </button>
+	
+	
+	        <button
+	            class="btn-danger-outline"
+	            onclick="closeModal(true, 'gameSessionModal')"
+	            style="
+	                width:100%;
+	                padding:10px;
+	            "
+	        >
+	            انصراف
+	        </button>
+	
+	    </div>
+	</div>
     <!-- پاپ آپ پرونده شخصی -->
     <div class="modal-overlay" id="visitModal" onclick="closeModal(event, 'visitModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -489,6 +762,7 @@
             </div>
 
             <div id="memberStatsDashboard"></div>
+			<div id="memberGameSessions"></div>
 
             <div class="visit-form">
                 <h3 style="margin-top:0; color:var(--lapis-lazuli);">ثبت پذیرش جدید</h3>
@@ -518,9 +792,13 @@
     </div>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        let members = [];
+    let members = [];
 	let currentActiveMemberId = null;
 	let gameCatalog = [];
+	
+	let gameSessions = [];
+	
+	let selectedGameSessionMemberIds = new Set();
 
 	const SUPABASE_URL = 'https://orhbwpuqcjwnietnepvh.supabase.co';
 	const SUPABASE_KEY = 'sb_publishable_rPylZEcBDLXPJFC30xJ_5g_82nbL0WZ';
@@ -580,6 +858,151 @@
 	            }))
 	    }));
 	}
+
+	async function loadGameSessions() {
+
+	    const { data: sessionsData, error: sessionsError } =
+	        await supabaseClient
+	            .from('game_sessions')
+	            .select('*')
+	            .order('start_time', { ascending: false });
+	
+	    if (sessionsError) {
+	
+	        console.error(
+	            'خطا در دریافت جلسات بازی:',
+	            sessionsError
+	        );
+	
+	        alert('خطا در دریافت جلسات بازی.');
+	
+	        return;
+	    }
+	
+	
+	    const { data: playersData, error: playersError } =
+	        await supabaseClient
+	            .from('game_session_players')
+	            .select('*');
+	
+	    if (playersError) {
+	
+	        console.error(
+	            'خطا در دریافت بازیکنان جلسات:',
+	            playersError
+	        );
+	
+	        alert('خطا در دریافت اعضای جلسات بازی.');
+	
+	        return;
+	    }
+	
+	
+	    gameSessions = (sessionsData || []).map(session => {
+	
+	        const game =
+	            gameCatalog.find(
+	                g => g.id === session.game_catalog_id
+	            );
+	
+	
+	        return {
+	            id: session.id,
+	
+	            gameCatalogId:
+	                session.game_catalog_id,
+	
+	            gameName:
+	                game ? game.name : 'بازی نامشخص',
+	
+	            startTime:
+	                session.start_time,
+	
+	            endTime:
+	                session.end_time,
+	
+	            duration:
+	                Number(session.duration) || 0,
+	
+	            status:
+	                session.status,
+	
+	            players:
+	                (playersData || [])
+	                    .filter(
+	                        player =>
+	                            player.game_session_id === session.id
+	                    )
+	                    .map(player => ({
+	                        id: player.id,
+	                        memberId: player.member_id,
+	                        tier: player.tier,
+	                        amount: Number(player.amount) || 0
+	                    }))
+	        };
+	
+	    });
+	
+	
+	    // پاک کردن سوابق بازی قبلی اعضا
+	
+	    members.forEach(member => {
+	        member.gameSessions = [];
+	    });
+	
+	
+	    // قرار دادن سوابق بازی داخل پرونده هر عضو
+	
+	    gameSessions.forEach(session => {
+	
+	        session.players.forEach(player => {
+	
+	            const member =
+	                members.find(
+	                    m => m.id === player.memberId
+	                );
+	
+	            if (!member) {
+	                return;
+	            }
+	
+	
+	            if (!member.gameSessions) {
+	                member.gameSessions = [];
+	            }
+	
+	
+	            member.gameSessions.push({
+	
+	                sessionId:
+	                    session.id,
+	
+	                gameName:
+	                    session.gameName,
+	
+	                startTime:
+	                    session.startTime,
+	
+	                endTime:
+	                    session.endTime,
+	
+	                duration:
+	                    session.duration,
+	
+	                tier:
+	                    player.tier,
+	
+	                amount:
+	                    player.amount
+	
+	            });
+	
+	        });
+	
+	    });
+	
+	}
+		
 	async function loadGameCatalog() {
 	    const { data, error } = await supabaseClient
 	        .from('game_catalog')
@@ -859,6 +1282,7 @@
 		    renderMemberPersonalInfo();
 		
 		    renderVisitsAndStats();
+			renderGameSessionHistory();
 		
 		    document.getElementById('visitModal').style.display = 'flex';
 		}
@@ -1427,6 +1851,760 @@
 		    alert("کل تاریخچه حضور کافه با موفقیت پاک شد.");
 		}
 
+		function getGameHourlyRate(tier) {
+		
+		    if (tier === 'beheshti') {
+		        return 0;
+		    }
+		
+		    if (tier === 'gold') {
+		        return 20000;
+		    }
+		
+		    if (tier === 'silver') {
+		        return 30000;
+		    }
+		
+		    return 50000;
+		}
+		
+		
+		function calculateGameCost(duration, tier) {
+		
+		    const hourlyRate =
+		        getGameHourlyRate(tier);
+		
+		    const rawCost =
+		        (duration / 60) * hourlyRate;
+		
+		    return Math.round(rawCost / 500) * 500;
+		}
+		
+		
+		function getGameSessionDuration() {
+		
+		    const start =
+		        document.getElementById('gameSessionStart').value;
+		
+		    const end =
+		        document.getElementById('gameSessionEnd').value;
+		
+		
+		    if (!start || !end) {
+		        return 0;
+		    }
+		
+		
+		    let [startHour, startMinute] =
+		        start.split(':').map(Number);
+		
+		    let [endHour, endMinute] =
+		        end.split(':').map(Number);
+		
+		
+		    let startMinutes =
+		        startHour * 60 + startMinute;
+		
+		    let endMinutes =
+		        endHour * 60 + endMinute;
+		
+		
+		    if (endMinutes < startMinutes) {
+		        endMinutes += 24 * 60;
+		    }
+		
+		
+		    return endMinutes - startMinutes;
+		}
+		
+		
+		function openGameSessionModal() {
+		
+		    selectedGameSessionMemberIds =
+		        new Set();
+		
+		
+		    const gameSelect =
+		        document.getElementById('gameSessionGame');
+		
+		
+		    gameSelect.innerHTML = `
+		        <option value="">
+		            انتخاب بازی...
+		        </option>
+		
+		        ${gameCatalog
+		            .filter(game => game.is_active)
+		            .map(game => `
+		                <option value="${game.id}">
+		                    ${game.name}
+		                </option>
+		            `)
+		            .join('')}
+		    `;
+		
+		
+		    const now = new Date();
+		
+		    const currentHour =
+		        now.getHours()
+		            .toString()
+		            .padStart(2, '0');
+		
+		    const currentMinute =
+		        now.getMinutes()
+		            .toString()
+		            .padStart(2, '0');
+		
+		
+		    const startTime =
+		        `${currentHour}:${currentMinute}`;
+		
+		
+		    let endDate =
+		        new Date(now.getTime() + 60 * 60 * 1000);
+		
+		
+		    const endTime =
+		        endDate.getHours()
+		            .toString()
+		            .padStart(2, '0')
+		        +
+		        ':'
+		        +
+		        endDate.getMinutes()
+		            .toString()
+		            .padStart(2, '0');
+		
+		
+		    document.getElementById('gameSessionStart').value =
+		        startTime;
+		
+		    document.getElementById('gameSessionEnd').value =
+		        endTime;
+		
+		
+		    document.getElementById('gameSessionMemberSearch').value =
+		        '';
+		
+		
+		    renderGameSessionMemberPicker();
+		
+		    updateGameSessionPreview();
+		
+		
+		    document.getElementById('gameSessionModal').style.display =
+		        'flex';
+		}
+		
+		
+		function renderGameSessionMemberPicker() {
+		
+		    const container =
+		        document.getElementById(
+		            'gameSessionMemberPicker'
+		        );
+		
+		
+		    if (!container) {
+		        return;
+		    }
+		
+		
+		    const searchInput =
+		        document.getElementById(
+		            'gameSessionMemberSearch'
+		        );
+		
+		
+		    const searchValue =
+		        searchInput
+		            ? searchInput.value.trim()
+		            : '';
+		
+		
+		    const filteredMembers =
+		        members.filter(member =>
+		            member.name
+		                .toLowerCase()
+		                .includes(
+		                    searchValue.toLowerCase()
+		                )
+		        );
+		
+		
+		    if (filteredMembers.length === 0) {
+		
+		        container.innerHTML = `
+		            <div
+		                style="
+		                    text-align:center;
+		                    padding:15px;
+		                    color:#999;
+		                    font-size:12px;
+		                "
+		            >
+		                عضوی با این نام پیدا نشد.
+		            </div>
+		        `;
+		
+		        return;
+		    }
+		
+		
+		    container.innerHTML =
+		        filteredMembers.map(member => {
+		
+		            const isSelected =
+		                selectedGameSessionMemberIds.has(
+		                    member.id
+		                );
+		
+		
+		            const tierLabel =
+		                member.tier === 'beheshti'
+		                    ? 'بهشتی'
+		                    : member.tier === 'gold'
+		                        ? 'طلایی'
+		                        : member.tier === 'silver'
+		                            ? 'نقره‌ای'
+		                            : 'عادی';
+		
+		
+		            return `
+		                <label
+		                    style="
+		                        display:flex;
+		                        align-items:center;
+		                        gap:8px;
+		                        padding:9px;
+		                        margin-bottom:5px;
+		                        border:1px solid #e5e8e8;
+		                        border-radius:7px;
+		                        background:${isSelected ? '#f5eef8' : '#fff'};
+		                        cursor:pointer;
+		                    "
+		                >
+		
+		                    <input
+		                        type="checkbox"
+		                        ${isSelected ? 'checked' : ''}
+		                        onchange="toggleGameSessionMember('${member.id}')"
+		                    >
+		
+		                    <span
+		                        style="
+		                            flex:1;
+		                            font-size:13px;
+		                            font-weight:600;
+		                        "
+		                    >
+		                        ${member.name}
+		                    </span>
+		
+		                    <span
+		                        style="
+		                            font-size:10px;
+		                            color:#8e44ad;
+		                        "
+		                    >
+		                        کارت ${tierLabel}
+		                    </span>
+		
+		                </label>
+		            `;
+		
+		        }).join('');
+		}
+		
+		
+		function toggleGameSessionMember(memberId) {
+		
+		    if (
+		        selectedGameSessionMemberIds.has(memberId)
+		    ) {
+		
+		        selectedGameSessionMemberIds.delete(
+		            memberId
+		        );
+		
+		    } else {
+		
+		        selectedGameSessionMemberIds.add(
+		            memberId
+		        );
+		
+		    }
+		
+		
+		    renderGameSessionMemberPicker();
+		
+		    updateGameSessionPreview();
+		}
+		
+		
+		function updateGameSessionPreview() {
+		
+		    const duration =
+		        getGameSessionDuration();
+		
+		
+		    const durationElement =
+		        document.getElementById(
+		            'gameSessionDuration'
+		        );
+		
+		
+		    if (!duration) {
+		
+		        durationElement.innerText =
+		            'مدت بازی: -- دقیقه';
+		
+		    } else {
+		
+		        const hours =
+		            Math.floor(duration / 60);
+		
+		        const minutes =
+		            duration % 60;
+		
+		
+		        let text = '';
+		
+		
+		        if (hours > 0) {
+		            text += `${hours} ساعت `;
+		        }
+		
+		        if (minutes > 0) {
+		            text += `${minutes} دقیقه`;
+		        }
+		
+		
+		        durationElement.innerText =
+		            `مدت بازی: ${text.trim()}`;
+		
+		    }
+		
+		
+		    renderSelectedGameSessionMembers();
+		}
+		
+		
+		function renderSelectedGameSessionMembers() {
+		
+		    const container =
+		        document.getElementById(
+		            'gameSessionSelectedMembers'
+		        );
+		
+		
+		    const countElement =
+		        document.getElementById(
+		            'gameSessionSelectedCount'
+		        );
+		
+		
+		    if (!container || !countElement) {
+		        return;
+		    }
+		
+		
+		    const selectedMembers =
+		        members.filter(member =>
+		            selectedGameSessionMemberIds.has(
+		                member.id
+		            )
+		        );
+		
+		
+		    countElement.innerText =
+		        `${selectedMembers.length.toLocaleString('fa-IR')} نفر`;
+		
+		
+		    if (selectedMembers.length === 0) {
+		
+		        container.innerHTML = `
+		            <div
+		                style="
+		                    text-align:center;
+		                    color:#999;
+		                    font-size:12px;
+		                "
+		            >
+		                هنوز عضوی انتخاب نشده است.
+		            </div>
+		        `;
+		
+		        return;
+		    }
+		
+		
+		    const duration =
+		        getGameSessionDuration();
+		
+		
+		    container.innerHTML =
+		        selectedMembers.map(member => {
+		
+		            const cost =
+		                calculateGameCost(
+		                    duration,
+		                    member.tier
+		                );
+		
+		
+		            return `
+		                <div
+		                    style="
+		                        display:flex;
+		                        align-items:center;
+		                        justify-content:space-between;
+		                        gap:10px;
+		                        padding:9px;
+		                        margin-bottom:6px;
+		                        background:#f8f9fa;
+		                        border-radius:7px;
+		                        border:1px solid #eee;
+		                    "
+		                >
+		
+		                    <span
+		                        style="
+		                            font-size:12px;
+		                            font-weight:bold;
+		                        "
+		                    >
+		                        ${member.name}
+		                    </span>
+		
+		                    <span
+		                        style="
+		                            font-size:11px;
+		                            color:#8e44ad;
+		                        "
+		                    >
+		                        ${cost.toLocaleString('fa-IR')}
+		                        تومان
+		                    </span>
+		
+		                </div>
+		            `;
+		
+		        }).join('');
+		}
+		
+		
+		async function saveGameSession() {
+		
+		    const gameCatalogId =
+		        document.getElementById(
+		            'gameSessionGame'
+		        ).value;
+		
+		
+		    const startTime =
+		        document.getElementById(
+		            'gameSessionStart'
+		        ).value;
+		
+		
+		    const endTime =
+		        document.getElementById(
+		            'gameSessionEnd'
+		        ).value;
+		
+		
+		    const selectedMemberIds =
+		        Array.from(
+		            selectedGameSessionMemberIds
+		        );
+		
+		
+		    if (!gameCatalogId) {
+		        return alert('لطفاً بازی را انتخاب کنید.');
+		    }
+		
+		
+		    if (!startTime || !endTime) {
+		        return alert(
+		            'ساعت شروع و پایان را وارد کنید.'
+		        );
+		    }
+		
+		
+		    if (selectedMemberIds.length === 0) {
+		        return alert(
+		            'حداقل یک عضو را برای بازی انتخاب کنید.'
+		        );
+		    }
+		
+		
+		    const duration =
+		        getGameSessionDuration();
+		
+		
+		    if (duration <= 0) {
+		        return alert(
+		            'مدت بازی معتبر نیست.'
+		        );
+		    }
+		
+		
+		    const now = new Date();
+		
+		
+		    const sessionStart =
+		        new Date(now);
+		
+		    const [startHour, startMinute] =
+		        startTime.split(':').map(Number);
+		
+		
+		    sessionStart.setHours(
+		        startHour,
+		        startMinute,
+		        0,
+		        0
+		    );
+		
+		
+		    const sessionEnd =
+		        new Date(now);
+		
+		    const [endHour, endMinute] =
+		        endTime.split(':').map(Number);
+		
+		
+		    sessionEnd.setHours(
+		        endHour,
+		        endMinute,
+		        0,
+		        0
+		    );
+		
+		
+		    if (sessionEnd < sessionStart) {
+		        sessionEnd.setDate(
+		            sessionEnd.getDate() + 1
+		        );
+		    }
+		
+		
+		    // -----------------------------
+		    // ثبت خود جلسه
+		    // -----------------------------
+		
+		    const { data: session, error: sessionError } =
+		        await supabaseClient
+		            .from('game_sessions')
+		            .insert({
+		                game_catalog_id:
+		                    gameCatalogId,
+		
+		                start_time:
+		                    sessionStart.toISOString(),
+		
+		                end_time:
+		                    sessionEnd.toISOString(),
+		
+		                duration:
+		                    duration,
+		
+		                status:
+		                    'completed'
+		            })
+		            .select()
+		            .single();
+		
+		
+		    if (sessionError) {
+		
+		        console.error(
+		            'خطا در ثبت جلسه بازی:',
+		            sessionError
+		        );
+		
+		        return alert(
+		            'ثبت جلسه بازی انجام نشد.'
+		        );
+		    }
+		
+		
+		    // -----------------------------
+		    // آماده کردن بازیکنان
+		    // -----------------------------
+		
+		    const playersToInsert =
+		        selectedMemberIds.map(memberId => {
+		
+		            const member =
+		                members.find(
+		                    m => m.id === memberId
+		                );
+		
+		
+		            return {
+		                game_session_id:
+		                    session.id,
+		
+		                member_id:
+		                    member.id,
+		
+		                tier:
+		                    member.tier,
+		
+		                amount:
+		                    calculateGameCost(
+		                        duration,
+		                        member.tier
+		                    )
+		            };
+		
+		        });
+		
+		
+		    // -----------------------------
+		    // ثبت بازیکنان
+		    // -----------------------------
+		
+		    const {
+		        data: insertedPlayers,
+		        error: playersError
+		    } =
+		        await supabaseClient
+		            .from('game_session_players')
+		            .insert(playersToInsert)
+		            .select();
+		
+		
+		    if (playersError) {
+		
+		        console.error(
+		            'خطا در ثبت بازیکنان:',
+		            playersError
+		        );
+		
+		
+		        await supabaseClient
+		            .from('game_sessions')
+		            .delete()
+		            .eq('id', session.id);
+		
+		
+		        return alert(
+		            'ثبت اعضای جلسه انجام نشد.'
+		        );
+		    }
+		
+		
+		    // -----------------------------
+		    // ثبت بازی برای پرونده هر عضو
+		    // -----------------------------
+		
+		    const game =
+		        gameCatalog.find(
+		            g => g.id === gameCatalogId
+		        );
+		
+		
+		    const gamesToInsert =
+		        playersToInsert.map(player => {
+		
+		            return {
+		                member_id:
+		                    player.member_id,
+		
+		                game_type:
+		                    game ? game.name : 'بازی',
+		
+		                amount:
+		                    player.amount,
+		
+		                played_at:
+		                    sessionStart.toISOString(),
+		
+		                description:
+		                    `جلسه بازی ${session.id}`
+		            };
+		
+		        });
+		
+		
+		    const {
+		        error: gamesError
+		    } =
+		        await supabaseClient
+		            .from('games')
+		            .insert(gamesToInsert);
+		
+		
+		    if (gamesError) {
+		
+		        console.error(
+		            'خطا در ثبت بازی‌های اعضا:',
+		            gamesError
+		        );
+		
+		
+		        await supabaseClient
+		            .from('game_session_players')
+		            .delete()
+		            .eq(
+		                'game_session_id',
+		                session.id
+		            );
+		
+		
+		        await supabaseClient
+		            .from('game_sessions')
+		            .delete()
+		            .eq('id', session.id);
+		
+		
+		        return alert(
+		            'ثبت بازی در پرونده اعضا انجام نشد.'
+		        );
+		    }
+		
+		
+		    // -----------------------------
+		    // به‌روزرسانی اطلاعات برنامه
+		    // -----------------------------
+		
+		    await loadGameSessions();
+		
+		
+		    // -----------------------------
+		    // بستن فرم
+		    // -----------------------------
+		
+		    selectedGameSessionMemberIds =
+		        new Set();
+		
+		
+		    document.getElementById(
+		        'gameSessionModal'
+		    ).style.display = 'none';
+		
+		
+		    alert(
+		        '🎮 جلسه بازی با موفقیت ثبت شد.'
+		    );
+		
+		
+		    // اگر پرونده عضوی باز است
+		    // دوباره رندر شود
+		
+		    if (currentActiveMemberId) {
+		
+		        renderGameSessionHistory();
+		
+		        renderVisitsAndStats();
+		
+		    }
+		}
+		
         // --- بخش تولید گزارشات جامع ---
         function openGlobalReports() {
 
@@ -2751,9 +3929,165 @@
 		        return 'تاریخ نامعتبر';
 		    }
 		}
+
+		function renderGameSessionHistory() {
+
+		    const container =
+		        document.getElementById(
+		            'memberGameSessions'
+		        );
+		
+		
+		    if (!container) {
+		        return;
+		    }
+		
+		
+		    const member =
+		        members.find(
+		            m => m.id === currentActiveMemberId
+		        );
+		
+		
+		    if (!member) {
+		        return;
+		    }
+		
+		
+		    const sessions =
+		        member.gameSessions || [];
+		
+		
+		    if (sessions.length === 0) {
+		
+		        container.innerHTML = '';
+		
+		        return;
+		    }
+		
+		
+		    container.innerHTML = `
+		
+		        <div
+		            class="stat-card"
+		            style="margin-bottom:15px;"
+		        >
+		
+		            <div
+		                class="stat-title"
+		                style="
+		                    color:var(--lapis-lazuli);
+		                    font-size:13px;
+		                    margin-bottom:10px;
+		                "
+		            >
+		                🎮 سوابق جلسات بازی
+		            </div>
+		
+		
+		            ${sessions.map(session => {
+		
+		                const start =
+		                    new Date(
+		                        session.startTime
+		                    );
+		
+		
+		                const startText =
+		                    start.toLocaleTimeString(
+		                        'fa-IR',
+		                        {
+		                            hour: '2-digit',
+		                            minute: '2-digit'
+		                        }
+		                    );
+		
+		
+		                const end =
+		                    new Date(
+		                        session.endTime
+		                    );
+		
+		
+		                const endText =
+		                    end.toLocaleTimeString(
+		                        'fa-IR',
+		                        {
+		                            hour: '2-digit',
+		                            minute: '2-digit'
+		                        }
+		                    );
+		
+		
+		                return `
+		
+		                    <div
+		                        style="
+		                            padding:10px;
+		                            margin-bottom:7px;
+		                            border:1px solid #eee;
+		                            border-radius:7px;
+		                            background:#f8f9fa;
+		                        "
+		                    >
+		
+		                        <div
+		                            style="
+		                                display:flex;
+		                                justify-content:space-between;
+		                                gap:10px;
+		                            "
+		                        >
+		
+		                            <strong>
+		                                🎮 ${session.gameName}
+		                            </strong>
+		
+		                            <strong
+		                                style="
+		                                    color:#8e44ad;
+		                                "
+		                            >
+		                                ${session.amount.toLocaleString('fa-IR')}
+		                                تومان
+		                            </strong>
+		
+		                        </div>
+		
+		
+		                        <div
+		                            style="
+		                                margin-top:6px;
+		                                font-size:11px;
+		                                color:#777;
+		                            "
+		                        >
+		                            ⏱ ${startText}
+		                            تا ${endText}
+		                            —
+		                            ${session.duration}
+		                            دقیقه
+		                        </div>
+		
+		                    </div>
+		
+		                `;
+		
+		            }).join('')}
+		
+		        </div>
+		
+		    `;
+		}
+				
         async function initApp() {
+
 		    await loadData();
+		
 		    await loadGameCatalog();
+		
+		    await loadGameSessions();
+		
 		    renderList();
 		}
 
