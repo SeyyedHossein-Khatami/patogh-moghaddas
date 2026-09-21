@@ -861,11 +861,20 @@
 
 	async function loadGameSessions() {
 
-	    const { data: sessionsData, error: sessionsError } =
-	        await supabaseClient
-	            .from('game_sessions')
-	            .select('*')
-	            .order('start_time', { ascending: false });
+	    // -----------------------------------------
+	    // دریافت جلسات بازی
+	    // -----------------------------------------
+	
+	    const {
+	        data: sessionsData,
+	        error: sessionsError
+	    } = await supabaseClient
+	        .from('game_sessions')
+	        .select('*')
+	        .order('start_time', {
+	            ascending: false
+	        });
+	
 	
 	    if (sessionsError) {
 	
@@ -874,16 +883,23 @@
 	            sessionsError
 	        );
 	
-	        alert('خطا در دریافت جلسات بازی.');
+	        gameSessions = [];
 	
 	        return;
 	    }
 	
 	
-	    const { data: playersData, error: playersError } =
-	        await supabaseClient
-	            .from('game_session_players')
-	            .select('*');
+	    // -----------------------------------------
+	    // دریافت بازیکنان جلسات
+	    // -----------------------------------------
+	
+	    const {
+	        data: playersData,
+	        error: playersError
+	    } = await supabaseClient
+	        .from('game_session_players')
+	        .select('*');
+	
 	
 	    if (playersError) {
 	
@@ -892,13 +908,17 @@
 	            playersError
 	        );
 	
-	        alert('خطا در دریافت اعضای جلسات بازی.');
+	        gameSessions = [];
 	
 	        return;
 	    }
 	
 	
-	    gameSessions = (sessionsData || []).map(session => {
+	    // -----------------------------------------
+	    // ساخت ساختار اصلی جلسات
+	    // -----------------------------------------
+	
+	    gameSessions = sessionsData.map(session => {
 	
 	        const game =
 	            gameCatalog.find(
@@ -906,14 +926,61 @@
 	            );
 	
 	
+	        const sessionPlayers =
+	            (playersData || [])
+	                .filter(
+	                    player =>
+	                        player.game_session_id === session.id
+	                )
+	                .map(player => {
+	
+	                    return {
+	
+	                        // شناسه رکورد خود بازیکن
+	                        playerId:
+	                            player.id,
+	
+	                        // شناسه عضو
+	                        memberId:
+	                            player.member_id,
+	
+	                        // کارت در زمان انجام بازی
+	                        tier:
+	                            player.tier,
+	
+	                        // مبلغ سهم این بازیکن
+	                        amount:
+	                            Number(player.amount || 0),
+	
+	                        // وضعیت پرداخت
+	                        paymentStatus:
+	                            player.payment_status || 'paid',
+	
+	                        // روش پرداخت
+	                        paymentMethod:
+	                            player.payment_method || null,
+	
+	                        // زمان تسویه
+	                        paidAt:
+	                            player.paid_at || null
+	
+	                    };
+	
+	                });
+	
+	
 	        return {
-	            id: session.id,
+	
+	            id:
+	                session.id,
 	
 	            gameCatalogId:
 	                session.game_catalog_id,
 	
 	            gameName:
-	                game ? game.name : 'بازی نامشخص',
+	                game
+	                    ? game.name
+	                    : 'بازی حذف‌شده',
 	
 	            startTime:
 	                session.start_time,
@@ -922,36 +989,33 @@
 	                session.end_time,
 	
 	            duration:
-	                Number(session.duration) || 0,
+	                Number(session.duration || 0),
 	
 	            status:
 	                session.status,
 	
 	            players:
-	                (playersData || [])
-	                    .filter(
-	                        player =>
-	                            player.game_session_id === session.id
-	                    )
-	                    .map(player => ({
-	                        id: player.id,
-	                        memberId: player.member_id,
-	                        tier: player.tier,
-	                        amount: Number(player.amount) || 0
-	                    }))
+	                sessionPlayers
+	
 	        };
 	
 	    });
 	
 	
-	    // پاک کردن سوابق بازی قبلی اعضا
+	    // -----------------------------------------
+	    // پاک‌سازی تاریخچه جلسات اعضا
+	    // -----------------------------------------
 	
 	    members.forEach(member => {
+	
 	        member.gameSessions = [];
+	
 	    });
 	
 	
-	    // قرار دادن سوابق بازی داخل پرونده هر عضو
+	    // -----------------------------------------
+	    // ساخت تاریخچه هر عضو
+	    // -----------------------------------------
 	
 	    gameSessions.forEach(session => {
 	
@@ -962,13 +1026,9 @@
 	                    m => m.id === player.memberId
 	                );
 	
+	
 	            if (!member) {
 	                return;
-	            }
-	
-	
-	            if (!member.gameSessions) {
-	                member.gameSessions = [];
 	            }
 	
 	
@@ -976,6 +1036,9 @@
 	
 	                sessionId:
 	                    session.id,
+	
+	                playerId:
+	                    player.playerId,
 	
 	                gameName:
 	                    session.gameName,
@@ -993,7 +1056,16 @@
 	                    player.tier,
 	
 	                amount:
-	                    player.amount
+	                    player.amount,
+	
+	                paymentStatus:
+	                    player.paymentStatus,
+	
+	                paymentMethod:
+	                    player.paymentMethod,
+	
+	                paidAt:
+	                    player.paidAt
 	
 	            });
 	
@@ -1001,6 +1073,26 @@
 	
 	    });
 	
+	
+	    // -----------------------------------------
+	    // مرتب‌سازی تاریخچه هر عضو
+	    // -----------------------------------------
+	
+	    members.forEach(member => {
+	
+	        member.gameSessions.sort(
+	            (a, b) =>
+	                new Date(b.startTime) -
+	                new Date(a.startTime)
+	        );
+	
+	    });
+	
+	
+	    console.log(
+	        'جلسات بازی بارگذاری شد:',
+	        gameSessions
+	    );
 	}
 		
 	async function loadGameCatalog() {
@@ -1079,72 +1171,141 @@
 
 
         function renderList(filterWord = "") {
-            const container = document.getElementById('membersList');
-            container.innerHTML = "";
-            const searchVal = filterWord.trim();
-
-            members.forEach(member => {
-                if (member.name.includes(searchVal)) {
-                    const tierLabel = member.tier === 'beheshti' ? 'کارت بهشتی' : (member.tier === 'gold' ? 'کارت طلایی' : (member.tier === 'silver' ? 'کارت نقره‌ای' : 'عضو عادی'));
-                    const cssClass = member.tier === 'beheshti' ? 'card-beheshti' : (member.tier === 'gold' ? 'card-gold' : (member.tier === 'silver' ? 'card-silver' : 'card-normal'));
-                    
-                    let hasActiveGame = member.visits.some(v => v.status === 'playing');
-                    let activeLabel = hasActiveGame ? `<div class="active-status">⏳ داخل کافه</div>` : '';
-                    let totalDebt = member.visits.reduce((sum, v) => (v.status === 'completed' && v.paymentStatus === 'debt') ? sum + v.cost : sum, 0);
-                    let debtLabel = totalDebt > 0 ? `<div style="font-size: 10px; color: #e74c3c; margin-top:5px; font-weight:bold;">⚠️ بدهکار</div>` : '';
-
-                    container.innerHTML += `
-                        <div class="member-card ${cssClass}">
-                            <div class="member-info">
-                                <div class="member-name">${member.name}</div>
-								<div style="
-								    display:flex;
-								    align-items:center;
-								    gap:6px;
-								">
-								
-								    <span
-								        class="member-badge"
-								    >
-								        ${tierLabel}
-								    </span>
-								
-								    <span
-								        style="
-								            font-size:20px;
-								            line-height:1;
-								        "
-								        title="${
-								            member.gender === 'male'
-								                ? 'مرد'
-								                : member.gender === 'female'
-								                    ? 'زن'
-								                    : 'جنسیت مشخص نشده'
-								        }"
-								    >
-								        ${
-								            member.gender === 'male'
-								                ? '👨'
-								                : member.gender === 'female'
-								                    ? '👩'
-								                    : '👤'
-								        }
-								    </span>
-								
-								</div>
-                                ${activeLabel}
-                                ${debtLabel}
-                            </div>
-                            <div class="btn-group">
-                                <button class="btn-action btn-open" onclick="openModal('${member.id}')">📝 پرونده</button>
-				<button class="btn-action btn-remove" onclick="removeMember('${member.id}')">حذف فرد</button>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-        }
-
+		    const container = document.getElementById('membersList');
+		    container.innerHTML = "";
+		
+		    const searchVal = filterWord.trim();
+		
+		    members.forEach(member => {
+		
+		        if (!member.name.includes(searchVal)) return;
+		
+		        const tierLabel =
+		            member.tier === 'beheshti'
+		                ? 'کارت بهشتی'
+		                : member.tier === 'gold'
+		                    ? 'کارت طلایی'
+		                    : member.tier === 'silver'
+		                        ? 'کارت نقره‌ای'
+		                        : 'عضو عادی';
+		
+		        const cssClass =
+		            member.tier === 'beheshti'
+		                ? 'card-beheshti'
+		                : member.tier === 'gold'
+		                    ? 'card-gold'
+		                    : member.tier === 'silver'
+		                        ? 'card-silver'
+		                        : 'card-normal';
+		
+		
+		        // ==========================================
+		        // محاسبه مجموع بدهی عضو از جلسات بازی
+		        // ==========================================
+		        const totalDebt = (member.gameSessions || []).reduce(
+		            (sum, session) => {
+		
+		                if (session.paymentStatus === 'debt') {
+		                    return sum + Number(session.amount || 0);
+		                }
+		
+		                return sum;
+		            },
+		            0
+		        );
+		
+		
+		        // ==========================================
+		        // برچسب بدهکاری
+		        // ==========================================
+		        const debtLabel = totalDebt > 0
+		            ? `
+		                <div style="
+		                    font-size: 10px;
+		                    color: #e74c3c;
+		                    margin-top: 5px;
+		                    font-weight: bold;
+		                ">
+		                    ⚠️ بدهکار
+		                    (${totalDebt.toLocaleString('fa-IR')} تومان)
+		                </div>
+		              `
+		            : '';
+		
+		
+		        // ==========================================
+		        // کارت عضو
+		        // ==========================================
+		        container.innerHTML += `
+		            <div class="member-card ${cssClass}">
+		
+		                <div class="member-info">
+		
+		                    <div class="member-name">
+		                        ${member.name}
+		                    </div>
+		
+		                    <div style="
+		                        display:flex;
+		                        align-items:center;
+		                        gap:6px;
+		                    ">
+		
+		                        <span class="member-badge">
+		                            ${tierLabel}
+		                        </span>
+		
+		                        <span
+		                            style="
+		                                font-size:20px;
+		                                line-height:1;
+		                            "
+		                            title="${
+		                                member.gender === 'male'
+		                                    ? 'مرد'
+		                                    : member.gender === 'female'
+		                                        ? 'زن'
+		                                        : 'جنسیت مشخص نشده'
+		                            }"
+		                        >
+		                            ${
+		                                member.gender === 'male'
+		                                    ? '👨'
+		                                    : member.gender === 'female'
+		                                        ? '👩'
+		                                        : '👤'
+		                            }
+		                        </span>
+		
+		                    </div>
+		
+		                    ${debtLabel}
+		
+		                </div>
+		
+		
+		                <div class="btn-group">
+		
+		                    <button
+		                        class="btn-action btn-open"
+		                        onclick="openModal('${member.id}')"
+		                    >
+		                        📝 پرونده
+		                    </button>
+		
+		                    <button
+		                        class="btn-action btn-remove"
+		                        onclick="removeMember('${member.id}')"
+		                    >
+		                        حذف فرد
+		                    </button>
+		
+		                </div>
+		
+		            </div>
+		        `;
+		    });
+		}
         function filterMembers() { renderList(document.getElementById('searchInput').value); }
 		
 		function jalaliToGregorian(jalaliDate) {
@@ -1280,8 +1441,6 @@
 		        member.tier;
 		
 		    renderMemberPersonalInfo();
-		
-		    renderVisitsAndStats();
 			renderGameSessionHistory();
 		
 		    document.getElementById('visitModal').style.display = 'flex';
@@ -2190,418 +2349,350 @@
 		    renderSelectedGameSessionMembers();
 		}
 		
+		function updateSessionPlayerPaymentUI(memberId) {
+		    const statusSelect = document.querySelector(
+		        `.session-player-payment-status[data-member-id="${memberId}"]`
+		    );
 		
-		function renderSelectedGameSessionMembers() {
+		    const wrapper = document.getElementById(
+		        `payment-method-wrapper-${memberId}`
+		    );
 		
-		    const container =
-		        document.getElementById(
-		            'gameSessionSelectedMembers'
-		        );
+		    if (!statusSelect || !wrapper) return;
 		
-		
-		    const countElement =
-		        document.getElementById(
-		            'gameSessionSelectedCount'
-		        );
-		
-		
-		    if (!container || !countElement) {
-		        return;
+		    if (statusSelect.value === 'debt') {
+		        wrapper.style.display = 'none';
+		    } else {
+		        wrapper.style.display = 'block';
 		    }
+		}
+		function renderSelectedGameSessionMembers() {
+		    const container = document.getElementById('gameSessionSelectedMembers');
+		    const countEl = document.getElementById('gameSessionSelectedCount');
 		
+		    const selectedMembers = members.filter(m =>
+		        selectedGameSessionMemberIds.has(m.id)
+		    );
 		
-		    const selectedMembers =
-		        members.filter(member =>
-		            selectedGameSessionMemberIds.has(
-		                member.id
-		            )
-		        );
-		
-		
-		    countElement.innerText =
-		        `${selectedMembers.length.toLocaleString('fa-IR')} نفر`;
-		
+		    countEl.textContent = selectedMembers.length;
 		
 		    if (selectedMembers.length === 0) {
-		
 		        container.innerHTML = `
-		            <div
-		                style="
-		                    text-align:center;
-		                    color:#999;
-		                    font-size:12px;
-		                "
-		            >
+		            <div style="
+		                text-align:center;
+		                color:#888;
+		                padding:20px;
+		                background:#f8f8f8;
+		                border-radius:10px;
+		            ">
 		                هنوز عضوی انتخاب نشده است.
 		            </div>
 		        `;
-		
 		        return;
 		    }
 		
+		    const duration = getGameSessionDuration();
 		
-		    const duration =
-		        getGameSessionDuration();
+		    container.innerHTML = selectedMembers.map(member => {
+		        const amount = calculateGameCost(duration, member.tier);
 		
+		        return `
+		            <div class="selected-game-member"
+		                 data-member-id="${member.id}"
+		                 style="
+		                    border:1px solid #ddd;
+		                    border-radius:12px;
+		                    padding:12px;
+		                    margin-bottom:10px;
+		                    background:#fff;
+		                 ">
 		
-		    container.innerHTML =
-		        selectedMembers.map(member => {
+		                <div style="
+		                    display:flex;
+		                    justify-content:space-between;
+		                    align-items:center;
+		                    margin-bottom:10px;
+		                ">
+		                    <strong>${member.name}</strong>
 		
-		            const cost =
-		                calculateGameCost(
-		                    duration,
-		                    member.tier
-		                );
-		
-		
-		            return `
-		                <div
-		                    style="
-		                        display:flex;
-		                        align-items:center;
-		                        justify-content:space-between;
-		                        gap:10px;
-		                        padding:9px;
-		                        margin-bottom:6px;
-		                        background:#f8f9fa;
-		                        border-radius:7px;
-		                        border:1px solid #eee;
-		                    "
-		                >
-		
-		                    <span
+		                    <button
+		                        type="button"
+		                        onclick="toggleGameSessionMember('${member.id}')"
 		                        style="
-		                            font-size:12px;
-		                            font-weight:bold;
+		                            border:none;
+		                            background:#fee;
+		                            color:#c00;
+		                            border-radius:8px;
+		                            padding:5px 9px;
+		                            cursor:pointer;
 		                        "
 		                    >
-		                        ${member.name}
-		                    </span>
+		                        حذف
+		                    </button>
+		                </div>
 		
-		                    <span
-		                        style="
-		                            font-size:11px;
-		                            color:#8e44ad;
-		                        "
-		                    >
-		                        ${cost.toLocaleString('fa-IR')}
-		                        تومان
-		                    </span>
+		                <div style="
+		                    display:grid;
+		                    grid-template-columns:repeat(2, 1fr);
+		                    gap:10px;
+		                ">
+		
+		                    <div>
+		                        <label>مبلغ</label>
+		                        <div style="
+		                            background:#f5f5f5;
+		                            padding:9px;
+		                            border-radius:8px;
+		                            margin-top:4px;
+		                        ">
+		                            ${amount.toLocaleString('fa-IR')} تومان
+		                        </div>
+		
+		                        <input
+		                            type="hidden"
+		                            class="session-player-amount"
+		                            data-member-id="${member.id}"
+		                            value="${amount}"
+		                        >
+		                    </div>
+		
+		                    <div>
+		                        <label>وضعیت پرداخت</label>
+		
+		                        <select
+		                            class="session-player-payment-status"
+		                            data-member-id="${member.id}"
+		                            onchange="updateSessionPlayerPaymentUI('${member.id}')"
+		                            style="
+		                                width:100%;
+		                                padding:9px;
+		                                margin-top:4px;
+		                                border:1px solid #ddd;
+		                                border-radius:8px;
+		                            "
+		                        >
+		                            <option value="paid">پرداخت شده</option>
+		                            <option value="debt">بدهکار</option>
+		                        </select>
+		                    </div>
 		
 		                </div>
-		            `;
 		
-		        }).join('');
+		                <div
+		                    id="payment-method-wrapper-${member.id}"
+		                    style="margin-top:10px;"
+		                >
+		                    <label>روش پرداخت</label>
+		
+		                    <select
+		                        class="session-player-payment-method"
+		                        data-member-id="${member.id}"
+		                        style="
+		                            width:100%;
+		                            padding:9px;
+		                            margin-top:4px;
+		                            border:1px solid #ddd;
+		                            border-radius:8px;
+		                        "
+		                    >
+		                        <option value="cash">نقدی</option>
+		                        <option value="card">کارتخوان</option>
+		                        <option value="transfer">کارت به کارت</option>
+		                    </select>
+		                </div>
+		
+		            </div>
+		        `;
+		    }).join('');
 		}
 		
 		
 		async function saveGameSession() {
-		
 		    const gameCatalogId =
-		        document.getElementById(
-		            'gameSessionGame'
-		        ).value;
-		
+		        document.getElementById('gameSessionGame').value;
 		
 		    const startTime =
-		        document.getElementById(
-		            'gameSessionStart'
-		        ).value;
-		
+		        document.getElementById('gameSessionStart').value;
 		
 		    const endTime =
-		        document.getElementById(
-		            'gameSessionEnd'
-		        ).value;
-		
+		        document.getElementById('gameSessionEnd').value;
 		
 		    const selectedMemberIds =
-		        Array.from(
-		            selectedGameSessionMemberIds
-		        );
-		
+		        Array.from(selectedGameSessionMemberIds);
 		
 		    if (!gameCatalogId) {
-		        return alert('لطفاً بازی را انتخاب کنید.');
+		        alert('لطفاً نوع بازی را انتخاب کنید.');
+		        return;
 		    }
-		
 		
 		    if (!startTime || !endTime) {
-		        return alert(
-		            'ساعت شروع و پایان را وارد کنید.'
-		        );
+		        alert('لطفاً زمان شروع و پایان جلسه را وارد کنید.');
+		        return;
 		    }
-		
 		
 		    if (selectedMemberIds.length === 0) {
-		        return alert(
-		            'حداقل یک عضو را برای بازی انتخاب کنید.'
-		        );
+		        alert('حداقل یک بازیکن باید انتخاب شود.');
+		        return;
 		    }
 		
+		    const start = new Date(`1970-01-01T${startTime}`);
+		    let end = new Date(`1970-01-01T${endTime}`);
 		
-		    const duration =
-		        getGameSessionDuration();
-		
-		
-		    if (duration <= 0) {
-		        return alert(
-		            'مدت بازی معتبر نیست.'
-		        );
+		    // اگر بازی از نیمه‌شب عبور کرده باشد
+		    if (end <= start) {
+		        end.setDate(end.getDate() + 1);
 		    }
 		
+		    const durationMinutes =
+		        Math.round((end - start) / 60000);
 		
-		    const now = new Date();
+		    if (durationMinutes <= 0) {
+		        alert('مدت جلسه معتبر نیست.');
+		        return;
+		    }
 		
-		
-		    const sessionStart =
-		        new Date(now);
-		
-		    const [startHour, startMinute] =
-		        startTime.split(':').map(Number);
-		
-		
-		    sessionStart.setHours(
-		        startHour,
-		        startMinute,
-		        0,
-		        0
+		    const game = gameCatalog.find(
+		        g => String(g.id) === String(gameCatalogId)
 		    );
 		
-		
-		    const sessionEnd =
-		        new Date(now);
-		
-		    const [endHour, endMinute] =
-		        endTime.split(':').map(Number);
-		
-		
-		    sessionEnd.setHours(
-		        endHour,
-		        endMinute,
-		        0,
-		        0
-		    );
-		
-		
-		    if (sessionEnd < sessionStart) {
-		        sessionEnd.setDate(
-		            sessionEnd.getDate() + 1
-		        );
+		    if (!game) {
+		        alert('بازی انتخاب‌شده پیدا نشد.');
+		        return;
 		    }
 		
+		    // اطلاعات پرداخت هر بازیکن
+		    const playersData = [];
 		
-		    // -----------------------------
-		    // ثبت خود جلسه
-		    // -----------------------------
-		
-		    const { data: session, error: sessionError } =
-		        await supabaseClient
-		            .from('game_sessions')
-		            .insert({
-		                game_catalog_id:
-		                    gameCatalogId,
-		
-		                start_time:
-		                    sessionStart.toISOString(),
-		
-		                end_time:
-		                    sessionEnd.toISOString(),
-		
-		                duration:
-		                    duration,
-		
-		                status:
-		                    'completed'
-		            })
-		            .select()
-		            .single();
-		
-		
-		    if (sessionError) {
-		
-		        console.error(
-		            'خطا در ثبت جلسه بازی:',
-		            sessionError
+		    for (const memberId of selectedMemberIds) {
+		        const member = members.find(
+		            m => String(m.id) === String(memberId)
 		        );
 		
-		        return alert(
-		            'ثبت جلسه بازی انجام نشد.'
+		        if (!member) continue;
+		
+		        const amountInput = document.querySelector(
+		            `.session-player-amount[data-member-id="${memberId}"]`
 		        );
-		    }
 		
+		        const statusInput = document.querySelector(
+		            `.session-player-payment-status[data-member-id="${memberId}"]`
+		        );
 		
-		    // -----------------------------
-		    // آماده کردن بازیکنان
-		    // -----------------------------
+		        const methodInput = document.querySelector(
+		            `.session-player-payment-method[data-member-id="${memberId}"]`
+		        );
 		
-		    const playersToInsert =
-		        selectedMemberIds.map(memberId => {
+		        const amount = Number(amountInput?.value || 0);
 		
-		            const member =
-		                members.find(
-		                    m => m.id === memberId
-		                );
+		        const paymentStatus =
+		            statusInput?.value || 'paid';
 		
+		        const paymentMethod =
+		            paymentStatus === 'paid'
+		                ? (methodInput?.value || 'cash')
+		                : null;
 		
-		            return {
-		                game_session_id:
-		                    session.id,
-		
-		                member_id:
-		                    member.id,
-		
-		                tier:
-		                    member.tier,
-		
-		                amount:
-		                    calculateGameCost(
-		                        duration,
-		                        member.tier
-		                    )
-		            };
-		
+		        playersData.push({
+		            game_session_id: null,
+		            member_id: member.id,
+		            tier: member.tier,
+		            amount: amount,
+		            payment_status: paymentStatus,
+		            payment_method: paymentMethod,
+		            paid_at:
+		                paymentStatus === 'paid'
+		                    ? new Date().toISOString()
+		                    : null
 		        });
-		
-		
-		    // -----------------------------
-		    // ثبت بازیکنان
-		    // -----------------------------
-		
-		    const {
-		        data: insertedPlayers,
-		        error: playersError
-		    } =
-		        await supabaseClient
-		            .from('game_session_players')
-		            .insert(playersToInsert)
-		            .select();
-		
-		
-		    if (playersError) {
-		
-		        console.error(
-		            'خطا در ثبت بازیکنان:',
-		            playersError
-		        );
-		
-		
-		        await supabaseClient
-		            .from('game_sessions')
-		            .delete()
-		            .eq('id', session.id);
-		
-		
-		        return alert(
-		            'ثبت اعضای جلسه انجام نشد.'
-		        );
 		    }
 		
+		    if (playersData.length === 0) {
+		        alert('اطلاعات بازیکنان معتبر نیست.');
+		        return;
+		    }
 		
-		    // -----------------------------
-		    // ثبت بازی برای پرونده هر عضو
-		    // -----------------------------
+		    try {
+		        // -----------------------------
+		        // 1. ثبت خود جلسه
+		        // -----------------------------
+		        const { data: session, error: sessionError } =
+		            await supabaseClient
+		                .from('game_sessions')
+		                .insert([{
+		                    game_catalog_id: gameCatalogId,
+		                    start_time: startTime,
+		                    end_time: endTime,
+		                    duration: durationMinutes,
+		                    status: 'completed'
+		                }])
+		                .select()
+		                .single();
 		
-		    const game =
-		        gameCatalog.find(
-		            g => g.id === gameCatalogId
-		        );
-		
-		
-		    const gamesToInsert =
-		        playersToInsert.map(player => {
-		
-		            return {
-		                member_id:
-		                    player.member_id,
-		
-		                game_type:
-		                    game ? game.name : 'بازی',
-		
-		                amount:
-		                    player.amount,
-		
-		                played_at:
-		                    sessionStart.toISOString(),
-		
-		                description:
-		                    `جلسه بازی ${session.id}`
-		            };
-		
-		        });
-		
-		
-		    const {
-		        error: gamesError
-		    } =
-		        await supabaseClient
-		            .from('games')
-		            .insert(gamesToInsert);
-		
-		
-		    if (gamesError) {
-		
-		        console.error(
-		            'خطا در ثبت بازی‌های اعضا:',
-		            gamesError
-		        );
-		
-		
-		        await supabaseClient
-		            .from('game_session_players')
-		            .delete()
-		            .eq(
-		                'game_session_id',
-		                session.id
+		        if (sessionError) {
+		            console.error(sessionError);
+		            throw new Error(
+		                'ثبت جلسه بازی انجام نشد.'
 		            );
+		        }
 		
+		        // -----------------------------
+		        // 2. اتصال بازیکنان به جلسه
+		        // -----------------------------
+		        const playersToInsert = playersData.map(player => ({
+		            ...player,
+		            game_session_id: session.id
+		        }));
 		
-		        await supabaseClient
-		            .from('game_sessions')
-		            .delete()
-		            .eq('id', session.id);
+		        const { error: playersError } =
+		            await supabaseClient
+		                .from('game_session_players')
+		                .insert(playersToInsert);
 		
+		        if (playersError) {
+		            console.error(playersError);
 		
-		        return alert(
-		            'ثبت بازی در پرونده اعضا انجام نشد.'
+		            // پاک کردن جلسه در صورت شکست
+		            await supabaseClient
+		                .from('game_sessions')
+		                .delete()
+		                .eq('id', session.id);
+		
+		            throw new Error(
+		                'ثبت بازیکنان جلسه انجام نشد.'
+		            );
+		        }
+		
+		        // -----------------------------
+		        // 3. بارگذاری مجدد اطلاعات
+		        // -----------------------------
+		        await loadGameSessions();
+		
+		        // -----------------------------
+		        // 4. بستن فرم
+		        // -----------------------------
+		        document.getElementById(
+		            'gameSessionModal'
+		        ).style.display = 'none';
+		
+		        selectedGameSessionMemberIds.clear();
+		
+		        // -----------------------------
+		        // 5. به‌روزرسانی صفحه
+		        // -----------------------------
+		        renderList();
+		
+		        if (currentActiveMemberId) {
+		            renderMemberPersonalInfo();
+		            renderGameSessionHistory();
+		        }
+		
+		        alert(
+		            `جلسه «${game.name}» با ${playersData.length} بازیکن با موفقیت ثبت شد.`
 		        );
-		    }
 		
-		
-		    // -----------------------------
-		    // به‌روزرسانی اطلاعات برنامه
-		    // -----------------------------
-		
-		    await loadGameSessions();
-		
-		
-		    // -----------------------------
-		    // بستن فرم
-		    // -----------------------------
-		
-		    selectedGameSessionMemberIds =
-		        new Set();
-		
-		
-		    document.getElementById(
-		        'gameSessionModal'
-		    ).style.display = 'none';
-		
-		
-		    alert(
-		        '🎮 جلسه بازی با موفقیت ثبت شد.'
-		    );
-		
-		
-		    // اگر پرونده عضوی باز است
-		    // دوباره رندر شود
-		
-		    if (currentActiveMemberId) {
-		
-		        renderGameSessionHistory();
-		
-		        renderVisitsAndStats();
-		
+		    } catch (error) {
+		        console.error(error);
+		        alert(error.message || 'خطا در ثبت جلسه بازی.');
 		    }
 		}
 		
@@ -3368,15 +3459,20 @@
 		}
 
 		function getActiveGameOptions() {
+
 		    return `
 		        <option value="">انتخاب بازی...</option>
+		
 		        ${gameCatalog
 		            .filter(game => game.is_active)
 		            .map(game => `
-		                <option value="${game.name}">${game.name}</option>
+		                <option value="${game.id}">
+		                    ${game.name}
+		                </option>
 		            `)
 		            .join('')}
 		    `;
+		
 		}
         // --- بخش رندر پرونده شخصی ---
         function renderVisitsAndStats() {
@@ -3930,153 +4026,367 @@
 		    }
 		}
 
-		function renderGameSessionHistory() {
-
-		    const container =
-		        document.getElementById(
-		            'memberGameSessions'
+		async function settleGameSessionPlayer(playerId) {
+		    if (!playerId) {
+		        alert('شناسه بازیکن جلسه پیدا نشد.');
+		        return;
+		    }
+		
+		    const confirmed = confirm(
+		        'آیا مطمئن هستید این بدهی تسویه شده است؟'
+		    );
+		
+		    if (!confirmed) return;
+		
+		
+		    const paymentMethod = prompt(
+		        'روش پرداخت را وارد کنید:\n\n' +
+		        'cash = نقدی\n' +
+		        'card = کارتخوان\n' +
+		        'transfer = کارت به کارت',
+		        'cash'
+		    );
+		
+		    if (paymentMethod === null) {
+		        return;
+		    }
+		
+		    const method = paymentMethod.trim().toLowerCase();
+		
+		    const allowedMethods = [
+		        'cash',
+		        'card',
+		        'transfer'
+		    ];
+		
+		    if (!allowedMethods.includes(method)) {
+		        alert(
+		            'روش پرداخت نامعتبر است.\n' +
+		            'فقط cash، card یا transfer وارد کنید.'
 		        );
-		
-		
-		    if (!container) {
 		        return;
 		    }
 		
 		
-		    const member =
-		        members.find(
-		            m => m.id === currentActiveMemberId
+		    try {
+		
+		        const { error } = await supabaseClient
+		            .from('game_session_players')
+		            .update({
+		                payment_status: 'paid',
+		                payment_method: method,
+		                paid_at: new Date().toISOString()
+		            })
+		            .eq('id', playerId);
+		
+		
+		        if (error) {
+		            console.error(error);
+		
+		            alert(
+		                'تسویه بدهی انجام نشد.'
+		            );
+		
+		            return;
+		        }
+		
+		
+		        // بارگذاری مجدد جلسات
+		        await loadGameSessions();
+		
+		
+		        // به‌روزرسانی لیست اعضا
+		        renderList();
+		
+		
+		        // به‌روزرسانی پرونده فعلی
+		        if (currentActiveMemberId) {
+		            renderMemberPersonalInfo();
+		            renderGameSessionHistory();
+		        }
+		
+		
+		        alert(
+		            '✅ بدهی با موفقیت تسویه شد.'
 		        );
 		
+		    } catch (error) {
+		
+		        console.error(error);
+		
+		        alert(
+		            'خطایی هنگام تسویه بدهی رخ داد.'
+		        );
+		    }
+		}
+		
+		function formatSessionDuration(minutes) {
+		    minutes = Number(minutes || 0);
+		
+		    if (minutes <= 0) {
+		        return '۰ دقیقه';
+		    }
+		
+		    const hours = Math.floor(minutes / 60);
+		    const mins = minutes % 60;
+		
+		    if (hours > 0 && mins > 0) {
+		        return `${hours.toLocaleString('fa-IR')} ساعت و ${mins.toLocaleString('fa-IR')} دقیقه`;
+		    }
+		
+		    if (hours > 0) {
+		        return `${hours.toLocaleString('fa-IR')} ساعت`;
+		    }
+		
+		    return `${mins.toLocaleString('fa-IR')} دقیقه`;
+		}
+
+		
+		function renderGameSessionHistory() {
+		    const container = document.getElementById('memberGameSessions');
+		
+		    if (!container) return;
+		
+		    const member = members.find(
+		        m => String(m.id) === String(currentActiveMemberId)
+		    );
 		
 		    if (!member) {
+		        container.innerHTML = '';
 		        return;
 		    }
 		
-		
-		    const sessions =
-		        member.gameSessions || [];
-		
+		    const sessions = member.gameSessions || [];
 		
 		    if (sessions.length === 0) {
-		
-		        container.innerHTML = '';
-		
+		        container.innerHTML = `
+		            <div style="
+		                text-align:center;
+		                padding:25px 15px;
+		                color:#888;
+		                background:#f8f8f8;
+		                border-radius:12px;
+		            ">
+		                🎮 هنوز در هیچ جلسه‌ای شرکت نکرده است.
+		            </div>
+		        `;
 		        return;
 		    }
 		
+		    // مرتب‌سازی از جدیدترین جلسه به قدیمی‌ترین
+		    const sortedSessions = [...sessions].sort((a, b) => {
+		        const dateA = new Date(
+		            `1970-01-01T${a.startTime || '00:00'}`
+		        );
+		
+		        const dateB = new Date(
+		            `1970-01-01T${b.startTime || '00:00'}`
+		        );
+		
+		        return dateB - dateA;
+		    });
 		
 		    container.innerHTML = `
+		        <div style="
+		            display:flex;
+		            justify-content:space-between;
+		            align-items:center;
+		            margin-bottom:12px;
+		        ">
+		            <h3 style="margin:0;">
+		                🎮 تاریخچه جلسات بازی
+		            </h3>
 		
-		        <div
-		            class="stat-card"
-		            style="margin-bottom:15px;"
-		        >
+		            <span style="
+		                background:#eee;
+		                padding:5px 10px;
+		                border-radius:20px;
+		                font-size:12px;
+		            ">
+		                ${sessions.length.toLocaleString('fa-IR')} جلسه
+		            </span>
+		        </div>
 		
-		            <div
-		                class="stat-title"
-		                style="
-		                    color:var(--lapis-lazuli);
-		                    font-size:13px;
-		                    margin-bottom:10px;
-		                "
-		            >
-		                🎮 سوابق جلسات بازی
-		            </div>
+		        <div>
+		            ${sortedSessions.map(session => {
 		
+		                const amount = Number(session.amount || 0);
 		
-		            ${sessions.map(session => {
+		                const isDebt =
+		                    session.paymentStatus === 'debt';
 		
-		                const start =
-		                    new Date(
-		                        session.startTime
-		                    );
+		                const paymentStatusText =
+		                    isDebt
+		                        ? 'بدهکار'
+		                        : 'پرداخت شده';
 		
+		                const paymentStatusColor =
+		                    isDebt
+		                        ? '#e74c3c'
+		                        : '#27ae60';
 		
-		                const startText =
-		                    start.toLocaleTimeString(
-		                        'fa-IR',
-		                        {
-		                            hour: '2-digit',
-		                            minute: '2-digit'
-		                        }
-		                    );
+		                const paymentIcon =
+		                    isDebt ? '⚠️' : '✅';
 		
+		                let paymentMethodText = '';
 		
-		                const end =
-		                    new Date(
-		                        session.endTime
-		                    );
-		
-		
-		                const endText =
-		                    end.toLocaleTimeString(
-		                        'fa-IR',
-		                        {
-		                            hour: '2-digit',
-		                            minute: '2-digit'
-		                        }
-		                    );
-		
+		                if (!isDebt) {
+		                    if (session.paymentMethod === 'cash') {
+		                        paymentMethodText = 'نقدی';
+		                    } else if (session.paymentMethod === 'card') {
+		                        paymentMethodText = 'کارتخوان';
+		                    } else if (session.paymentMethod === 'transfer') {
+		                        paymentMethodText = 'کارت به کارت';
+		                    } else {
+		                        paymentMethodText =
+		                            session.paymentMethod || 'ثبت نشده';
+		                    }
+		                }
 		
 		                return `
+		                    <div style="
+		                        border:1px solid #e1e1e1;
+		                        border-radius:12px;
+		                        padding:14px;
+		                        margin-bottom:12px;
+		                        background:#fff;
+		                        box-shadow:0 2px 6px rgba(0,0,0,0.04);
+		                    ">
 		
-		                    <div
-		                        style="
-		                            padding:10px;
-		                            margin-bottom:7px;
-		                            border:1px solid #eee;
-		                            border-radius:7px;
-		                            background:#f8f9fa;
-		                        "
-		                    >
+		                        <!-- عنوان جلسه -->
+		                        <div style="
+		                            display:flex;
+		                            justify-content:space-between;
+		                            align-items:center;
+		                            gap:10px;
+		                            margin-bottom:12px;
+		                        ">
 		
-		                        <div
-		                            style="
-		                                display:flex;
-		                                justify-content:space-between;
-		                                gap:10px;
-		                            "
-		                        >
-		
-		                            <strong>
-		                                🎮 ${session.gameName}
+		                            <strong style="font-size:15px;">
+		                                🎮 ${session.gameName || 'بازی'}
 		                            </strong>
 		
-		                            <strong
-		                                style="
-		                                    color:#8e44ad;
-		                                "
-		                            >
-		                                ${session.amount.toLocaleString('fa-IR')}
-		                                تومان
-		                            </strong>
-		
-		                        </div>
-		
-		
-		                        <div
-		                            style="
-		                                margin-top:6px;
+		                            <span style="
 		                                font-size:11px;
-		                                color:#777;
-		                            "
-		                        >
-		                            ⏱ ${startText}
-		                            تا ${endText}
-		                            —
-		                            ${session.duration}
-		                            دقیقه
+		                                color:${paymentStatusColor};
+		                                background:${isDebt ? '#fff0f0' : '#effaf3'};
+		                                padding:5px 9px;
+		                                border-radius:20px;
+		                                font-weight:bold;
+		                                white-space:nowrap;
+		                            ">
+		                                ${paymentIcon} ${paymentStatusText}
+		                            </span>
+		
 		                        </div>
+		
+		
+		                        <!-- اطلاعات جلسه -->
+		                        <div style="
+		                            display:grid;
+		                            grid-template-columns:repeat(2, 1fr);
+		                            gap:8px;
+		                            font-size:12px;
+		                        ">
+		
+		                            <div>
+		                                <span style="color:#888;">
+		                                    زمان:
+		                                </span>
+		
+		                                <strong>
+		                                    ${session.startTime || '-'}
+		                                    تا
+		                                    ${session.endTime || '-'}
+		                                </strong>
+		                            </div>
+		
+		
+		                            <div>
+		                                <span style="color:#888;">
+		                                    مدت:
+		                                </span>
+		
+		                                <strong>
+		                                    ${formatSessionDuration(session.duration)}
+		                                </strong>
+		                            </div>
+		
+		
+		                            <div>
+		                                <span style="color:#888;">
+		                                    مبلغ:
+		                                </span>
+		
+		                                <strong>
+		                                    ${amount.toLocaleString('fa-IR')}
+		                                    تومان
+		                                </strong>
+		                            </div>
+		
+		
+		                            ${
+		                                !isDebt
+		                                    ? `
+		                                        <div>
+		                                            <span style="color:#888;">
+		                                                روش پرداخت:
+		                                            </span>
+		
+		                                            <strong>
+		                                                ${paymentMethodText}
+		                                            </strong>
+		                                        </div>
+		                                      `
+		                                    : `
+		                                        <div>
+		                                            <span style="color:#888;">
+		                                                وضعیت:
+		                                            </span>
+		
+		                                            <strong style="color:#e74c3c;">
+		                                                بدهی
+		                                            </strong>
+		                                        </div>
+		                                      `
+		                            }
+		
+		                        </div>
+		
+		
+		                        ${
+		                            isDebt
+		                                ? `
+		                                    <div style="
+		                                        margin-top:12px;
+		                                        padding-top:12px;
+		                                        border-top:1px solid #eee;
+		                                        text-align:left;
+		                                    ">
+		                                        <button
+		                                            onclick="settleGameSessionPlayer('${session.playerId}')"
+		                                            style="
+		                                                border:none;
+		                                                background:#27ae60;
+		                                                color:white;
+		                                                padding:8px 14px;
+		                                                border-radius:8px;
+		                                                cursor:pointer;
+		                                                font-family:inherit;
+		                                            "
+		                                        >
+		                                            💰 تسویه بدهی
+		                                        </button>
+		                                    </div>
+		                                  `
+		                                : ''
+		                        }
 		
 		                    </div>
-		
 		                `;
 		
 		            }).join('')}
-		
 		        </div>
-		
 		    `;
 		}
 				
