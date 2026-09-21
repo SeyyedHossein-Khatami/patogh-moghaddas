@@ -4055,46 +4055,34 @@
 		}
 
 		async function settleGameSessionPlayer(playerId) {
+
 		    if (!playerId) {
 		        alert('شناسه بازیکن جلسه پیدا نشد.');
 		        return;
 		    }
 		
+		    const methodSelect = document.getElementById(
+		        `settle-method-${playerId}`
+		    );
+		
+		    if (!methodSelect) {
+		        alert('روش پرداخت انتخاب نشده است.');
+		        return;
+		    }
+		
+		    const paymentMethod = methodSelect.value;
+		
+		    const methodNames = {
+		        cash: 'نقدی',
+		        card: 'کارتخوان',
+		        transfer: 'کارت به کارت'
+		    };
+		
 		    const confirmed = confirm(
-		        'آیا مطمئن هستید این بدهی تسویه شده است؟'
+		        `آیا بدهی با روش «${methodNames[paymentMethod]}» تسویه شده است؟`
 		    );
 		
 		    if (!confirmed) return;
-		
-		
-		    const paymentMethod = prompt(
-		        'روش پرداخت را وارد کنید:\n\n' +
-		        'cash = نقدی\n' +
-		        'card = کارتخوان\n' +
-		        'transfer = کارت به کارت',
-		        'cash'
-		    );
-		
-		    if (paymentMethod === null) {
-		        return;
-		    }
-		
-		    const method = paymentMethod.trim().toLowerCase();
-		
-		    const allowedMethods = [
-		        'cash',
-		        'card',
-		        'transfer'
-		    ];
-		
-		    if (!allowedMethods.includes(method)) {
-		        alert(
-		            'روش پرداخت نامعتبر است.\n' +
-		            'فقط cash، card یا transfer وارد کنید.'
-		        );
-		        return;
-		    }
-		
 		
 		    try {
 		
@@ -4102,49 +4090,34 @@
 		            .from('game_session_players')
 		            .update({
 		                payment_status: 'paid',
-		                payment_method: method,
+		                payment_method: paymentMethod,
 		                paid_at: new Date().toISOString()
 		            })
 		            .eq('id', playerId);
 		
-		
 		        if (error) {
 		            console.error(error);
 		
-		            alert(
-		                'تسویه بدهی انجام نشد.'
-		            );
-		
+		            alert('تسویه بدهی انجام نشد.');
 		            return;
 		        }
 		
-		
-		        // بارگذاری مجدد جلسات
 		        await loadGameSessions();
 		
-		
-		        // به‌روزرسانی لیست اعضا
 		        renderList();
 		
-		
-		        // به‌روزرسانی پرونده فعلی
 		        if (currentActiveMemberId) {
 		            renderMemberPersonalInfo();
 		            renderGameSessionHistory();
 		        }
 		
-		
-		        alert(
-		            '✅ بدهی با موفقیت تسویه شد.'
-		        );
+		        alert('✅ بدهی با موفقیت تسویه شد.');
 		
 		    } catch (error) {
 		
 		        console.error(error);
 		
-		        alert(
-		            'خطایی هنگام تسویه بدهی رخ داد.'
-		        );
+		        alert('خطایی هنگام تسویه بدهی رخ داد.');
 		    }
 		}
 		
@@ -4317,18 +4290,6 @@
 		                            font-size:12px;
 		                        ">
 		
-		                            <div>
-		                                <span style="color:#888;">
-		                                    زمان:
-		                                </span>
-		
-		                                <strong>
-		                                    ${session.startTime || '-'}
-		                                    تا
-		                                    ${session.endTime || '-'}
-		                                </strong>
-		                            </div>
-		
 		
 		                            <div>
 		                                <span style="color:#888;">
@@ -4382,34 +4343,76 @@
 		                        </div>
 		
 		
-		                        ${
-		                            isDebt
-		                                ? `
-		                                    <div style="
-		                                        margin-top:12px;
-		                                        padding-top:12px;
-		                                        border-top:1px solid #eee;
-		                                        text-align:left;
-		                                    ">
-		                                        <button
-		                                            onclick="settleGameSessionPlayer('${session.playerId}')"
-		                                            style="
-		                                                border:none;
-		                                                background:#27ae60;
-		                                                color:white;
-		                                                padding:8px 14px;
-		                                                border-radius:8px;
-		                                                cursor:pointer;
-		                                                font-family:inherit;
-		                                            "
-		                                        >
-		                                            💰 تسویه بدهی
-		                                        </button>
-		                                    </div>
-		                                  `
-		                                : ''
-		                        }
-		
+		                        
+									${
+									    isDebt
+									        ? `
+									            <div style="
+									                margin-top:12px;
+									                padding-top:12px;
+									                border-top:1px solid #eee;
+									            ">
+									
+									                <div style="
+									                    display:flex;
+									                    align-items:center;
+									                    gap:8px;
+									                    margin-bottom:8px;
+									                ">
+									
+									                    <label style="
+									                        font-size:12px;
+									                        font-weight:bold;
+									                    ">
+									                        روش تسویه:
+									                    </label>
+									
+									                    <select
+									                        id="settle-method-${session.playerId}"
+									                        style="
+									                            flex:1;
+									                            padding:8px;
+									                            border:1px solid #ddd;
+									                            border-radius:8px;
+									                            font-family:inherit;
+									                        "
+									                    >
+									                        <option value="cash">
+									                            نقدی
+									                        </option>
+									
+									                        <option value="card">
+									                            کارتخوان
+									                        </option>
+									
+									                        <option value="transfer">
+									                            کارت به کارت
+									                        </option>
+									                    </select>
+									
+									                </div>
+									
+									                <button
+									                    onclick="settleGameSessionPlayer('${session.playerId}')"
+									                    style="
+									                        width:100%;
+									                        border:none;
+									                        background:#27ae60;
+									                        color:white;
+									                        padding:9px 14px;
+									                        border-radius:8px;
+									                        cursor:pointer;
+									                        font-family:inherit;
+									                        font-weight:bold;
+									                    "
+									                >
+									                    💰 ثبت تسویه بدهی
+									                </button>
+									
+									            </div>
+									          `
+									        : ''
+									}
 		                    </div>
 		                `;
 		
