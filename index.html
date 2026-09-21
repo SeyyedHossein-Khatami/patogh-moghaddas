@@ -5208,7 +5208,161 @@
 		
 		    document.body.appendChild(modal);
 		}
-				
+
+
+		function showDashboardDebtors() {
+		    const debtors = members
+		        .map(member => {
+		            const totalDebt = (member.gameSessions || []).reduce((sum, session) => {
+		                if (session.paymentStatus === 'debt') {
+		                    return sum + Number(session.amount || 0);
+		                }
+		                return sum;
+		            }, 0);
+		
+		            return {
+		                ...member,
+		                totalDebt
+		            };
+		        })
+		        .filter(member => member.totalDebt > 0)
+		        .sort((a, b) => b.totalDebt - a.totalDebt);
+		
+		    const modal = document.createElement('div');
+		
+		    modal.style.cssText = `
+		        position:fixed;
+		        inset:0;
+		        background:rgba(0,0,0,.6);
+		        display:flex;
+		        align-items:center;
+		        justify-content:center;
+		        z-index:9999;
+		        padding:20px;
+		    `;
+		
+		    modal.innerHTML = `
+		        <div style="
+		            background:white;
+		            width:min(700px, 100%);
+		            max-height:85vh;
+		            overflow:auto;
+		            border-radius:18px;
+		            padding:25px;
+		            direction:rtl;
+		        ">
+		
+		            <div style="
+		                display:flex;
+		                justify-content:space-between;
+		                align-items:center;
+		                margin-bottom:20px;
+		            ">
+		                <h2 style="margin:0;">
+		                    💰 لیست افراد بدهکار
+		                </h2>
+		
+		                <button
+		                    onclick="this.closest('[data-debt-modal]').remove()"
+		                    style="
+		                        border:none;
+		                        background:#eee;
+		                        width:36px;
+		                        height:36px;
+		                        border-radius:50%;
+		                        cursor:pointer;
+		                        font-size:18px;
+		                    "
+		                >
+		                    ✕
+		                </button>
+		            </div>
+		
+		            ${
+		                debtors.length === 0
+		                    ? `
+		                        <div style="
+		                            text-align:center;
+		                            padding:40px 20px;
+		                            color:#777;
+		                        ">
+		                            <div style="font-size:45px;">✅</div>
+		                            <h3>هیچ فرد بدهکاری وجود ندارد</h3>
+		                        </div>
+		                    `
+		                    : `
+		                        <div style="
+		                            background:#f8f9fa;
+		                            border-radius:12px;
+		                            padding:12px 15px;
+		                            margin-bottom:15px;
+		                            font-weight:bold;
+		                        ">
+		                            تعداد بدهکاران:
+		                            ${debtors.length.toLocaleString('fa-IR')} نفر
+		                        </div>
+		
+		                        ${debtors.map((member, index) => `
+		                            <div style="
+		                                display:flex;
+		                                justify-content:space-between;
+		                                align-items:center;
+		                                gap:15px;
+		                                padding:15px;
+		                                margin-bottom:10px;
+		                                background:#fff8e1;
+		                                border:1px solid #ffe082;
+		                                border-radius:12px;
+		                            ">
+		
+		                                <div style="display:flex;align-items:center;gap:12px;">
+		                                    <div style="
+		                                        width:35px;
+		                                        height:35px;
+		                                        border-radius:50%;
+		                                        background:#ffe082;
+		                                        display:flex;
+		                                        align-items:center;
+		                                        justify-content:center;
+		                                        font-weight:bold;
+		                                    ">
+		                                        ${(index + 1).toLocaleString('fa-IR')}
+		                                    </div>
+		
+		                                    <div>
+		                                        <strong>
+		                                            ${member.name}
+		                                        </strong>
+		                                    </div>
+		                                </div>
+		
+		                                <div style="
+		                                    color:#c62828;
+		                                    font-weight:bold;
+		                                    white-space:nowrap;
+		                                ">
+		                                    ${member.totalDebt.toLocaleString('fa-IR')} تومان
+		                                </div>
+		
+		                            </div>
+		                        `).join('')}
+		                    `
+		            }
+		
+		        </div>
+		    `;
+		
+		    modal.setAttribute('data-debt-modal', 'true');
+		
+		    modal.addEventListener('click', function(e) {
+		        if (e.target === modal) {
+		            modal.remove();
+		        }
+		    });
+		
+		    document.body.appendChild(modal);
+		}
+		
         async function initApp() {
 
 		    await loadData();
