@@ -2265,53 +2265,47 @@
 		        'flex';
 		}
 		
-		
 		function renderGameSessionMemberPicker() {
+
+		    const container = document.getElementById(
+		        'gameSessionMemberPicker'
+		    );
 		
-		    const container =
-		        document.getElementById(
-		            'gameSessionMemberPicker'
-		        );
+		    if (!container) return;
 		
+		    const searchInput = document.getElementById(
+		        'gameSessionMemberSearch'
+		    );
 		
-		    if (!container) {
-		        return;
-		    }
+		    const searchValue = searchInput
+		        ? searchInput.value.trim()
+		        : '';
 		
-		
-		    const searchInput =
-		        document.getElementById(
-		            'gameSessionMemberSearch'
-		        );
-		
-		
-		    const searchValue =
-		        searchInput
-		            ? searchInput.value.trim()
-		            : '';
-		
-		
-		    const filteredMembers =
-		        members.filter(member =>
-		            member.name
-		                .toLowerCase()
-		                .includes(
-		                    searchValue.toLowerCase()
-		                )
-		        );
-		
+		    const filteredMembers = members.filter(member =>
+		        member.name
+		            .toLowerCase()
+		            .includes(searchValue.toLowerCase())
+		    );
 		
 		    if (filteredMembers.length === 0) {
 		
 		        container.innerHTML = `
-		            <div
-		                style="
-		                    text-align:center;
-		                    padding:15px;
-		                    color:#999;
-		                    font-size:12px;
-		                "
-		            >
+		            <div style="
+		                text-align:center;
+		                padding:30px 15px;
+		                color:#888;
+		                background:#fafafa;
+		                border:1px dashed #ddd;
+		                border-radius:12px;
+		                font-size:13px;
+		            ">
+		                <div style="
+		                    font-size:28px;
+		                    margin-bottom:8px;
+		                ">
+		                    🔍
+		                </div>
+		
 		                عضوی با این نام پیدا نشد.
 		            </div>
 		        `;
@@ -2319,70 +2313,170 @@
 		        return;
 		    }
 		
+		    container.innerHTML = filteredMembers.map(member => {
 		
-		    container.innerHTML =
-		        filteredMembers.map(member => {
+		        const isSelected =
+		            selectedGameSessionMemberIds.has(member.id);
 		
-		            const isSelected =
-		                selectedGameSessionMemberIds.has(
-		                    member.id
-		                );
+		        const tierLabel =
+		            member.tier === 'beheshti'
+		                ? 'کارت بهشتی'
+		                : member.tier === 'gold'
+		                    ? 'کارت طلایی'
+		                    : member.tier === 'silver'
+		                        ? 'کارت نقره‌ای'
+		                        : 'عضو عادی';
 		
+		        const tierColor =
+		            member.tier === 'beheshti'
+		                ? '#8e44ad'
+		                : member.tier === 'gold'
+		                    ? '#b8860b'
+		                    : member.tier === 'silver'
+		                        ? '#607d8b'
+		                        : '#666';
 		
-		            const tierLabel =
-		                member.tier === 'beheshti'
-		                    ? 'بهشتی'
-		                    : member.tier === 'gold'
-		                        ? 'طلایی'
-		                        : member.tier === 'silver'
-		                            ? 'نقره‌ای'
-		                            : 'عادی';
+		        const genderIcon =
+		            member.gender === 'male'
+		                ? '👨'
+		                : member.gender === 'female'
+		                    ? '👩'
+		                    : '👤';
 		
+		        return `
+		            <label
+		                style="
+		                    display:flex;
+		                    align-items:center;
+		                    gap:12px;
 		
-		            return `
-		                <label
+		                    padding:12px 14px;
+		                    margin-bottom:8px;
+		
+		                    border:1px solid ${
+		                        isSelected
+		                            ? '#8e44ad'
+		                            : '#e5e5e5'
+		                    };
+		
+		                    border-radius:12px;
+		
+		                    background:${
+		                        isSelected
+		                            ? '#faf5fc'
+		                            : '#fff'
+		                    };
+		
+		                    cursor:pointer;
+		
+		                    transition:
+		                        background .15s,
+		                        border-color .15s,
+		                        box-shadow .15s;
+		
+		                    box-shadow:${
+		                        isSelected
+		                            ? '0 2px 8px rgba(142,68,173,.10)'
+		                            : 'none'
+		                    };
+		                "
+		            >
+		
+		                <!-- چک‌باکس -->
+		                <input
+		                    type="checkbox"
+		                    ${isSelected ? 'checked' : ''}
+		                    onchange="
+		                        toggleGameSessionMember('${member.id}')
+		                    "
 		                    style="
-		                        display:flex;
-		                        align-items:center;
-		                        gap:8px;
-		                        padding:9px;
-		                        margin-bottom:5px;
-		                        border:1px solid #e5e8e8;
-		                        border-radius:7px;
-		                        background:${isSelected ? '#f5eef8' : '#fff'};
+		                        width:18px;
+		                        height:18px;
+		                        accent-color:#8e44ad;
 		                        cursor:pointer;
+		                        flex-shrink:0;
 		                    "
 		                >
 		
-		                    <input
-		                        type="checkbox"
-		                        ${isSelected ? 'checked' : ''}
-		                        onchange="toggleGameSessionMember('${member.id}')"
-		                    >
+		                <!-- آیکون جنسیت -->
+		                <div style="
+		                    width:38px;
+		                    height:38px;
+		                    border-radius:10px;
 		
-		                    <span
-		                        style="
-		                            flex:1;
-		                            font-size:13px;
-		                            font-weight:600;
-		                        "
-		                    >
+		                    display:flex;
+		                    align-items:center;
+		                    justify-content:center;
+		
+		                    background:${
+		                        isSelected
+		                            ? '#f0e3f5'
+		                            : '#f5f5f5'
+		                    };
+		
+		                    font-size:20px;
+		                    flex-shrink:0;
+		                ">
+		                    ${genderIcon}
+		                </div>
+		
+		                <!-- اطلاعات عضو -->
+		                <div style="
+		                    flex:1;
+		                    min-width:0;
+		                ">
+		
+		                    <div style="
+		                        font-size:14px;
+		                        font-weight:700;
+		                        color:#333;
+		                        margin-bottom:5px;
+		
+		                        white-space:nowrap;
+		                        overflow:hidden;
+		                        text-overflow:ellipsis;
+		                    ">
 		                        ${member.name}
+		                    </div>
+		
+		                    <span style="
+		                        display:inline-block;
+		
+		                        font-size:11px;
+		                        font-weight:600;
+		
+		                        color:${tierColor};
+		
+		                        background:#f7f7f7;
+		
+		                        padding:3px 8px;
+		                        border-radius:20px;
+		                    ">
+		                        ${tierLabel}
 		                    </span>
 		
-		                    <span
-		                        style="
-		                            font-size:10px;
-		                            color:#8e44ad;
-		                        "
-		                    >
-		                        کارت ${tierLabel}
-		                    </span>
+		                </div>
 		
-		                </label>
-		            `;
+		                <!-- وضعیت انتخاب -->
+		                ${
+		                    isSelected
+		                        ? `
+		                            <div style="
+		                                color:#8e44ad;
+		                                font-size:12px;
+		                                font-weight:700;
+		                                white-space:nowrap;
+		                            ">
+		                                ✓ انتخاب شد
+		                            </div>
+		                        `
+		                        : ''
+		                }
 		
-		        }).join('');
+		            </label>
+		        `;
+		
+		    }).join('');
 		}
 		
 		
@@ -2476,142 +2570,385 @@
 		    }
 		}
 		function renderSelectedGameSessionMembers() {
-		    const container = document.getElementById('gameSessionSelectedMembers');
-		    const countEl = document.getElementById('gameSessionSelectedCount');
 		
-		    const selectedMembers = members.filter(m =>
-		        selectedGameSessionMemberIds.has(m.id)
+		    const container = document.getElementById(
+		        'gameSessionSelectedMembers'
 		    );
 		
-		    countEl.textContent = selectedMembers.length;
+		    const countEl = document.getElementById(
+		        'gameSessionSelectedCount'
+		    );
+		
+		    const selectedMembers = members.filter(member =>
+		        selectedGameSessionMemberIds.has(member.id)
+		    );
+		
+		    if (countEl) {
+		        countEl.textContent =
+		            selectedMembers.length.toLocaleString('fa-IR');
+		    }
 		
 		    if (selectedMembers.length === 0) {
+		
 		        container.innerHTML = `
 		            <div style="
 		                text-align:center;
+		
+		                padding:30px 20px;
+		
+		                background:#fafafa;
+		
+		                border:1px dashed #ddd;
+		                border-radius:12px;
+		
 		                color:#888;
-		                padding:20px;
-		                background:#f8f8f8;
-		                border-radius:10px;
+		
+		                font-size:13px;
 		            ">
-		                هنوز عضوی انتخاب نشده است.
+		
+		                <div style="
+		                    font-size:30px;
+		                    margin-bottom:8px;
+		                ">
+		                    👥
+		                </div>
+		
+		                هنوز عضوی برای این جلسه انتخاب نشده است.
+		
+		                <div style="
+		                    font-size:11px;
+		                    color:#aaa;
+		                    margin-top:6px;
+		                ">
+		                    از لیست بالا بازیکنان جلسه را انتخاب کنید.
+		                </div>
+		
 		            </div>
 		        `;
+		
 		        return;
 		    }
 		
 		    const duration = getGameSessionDuration();
 		
 		    container.innerHTML = selectedMembers.map(member => {
-		        const amount = calculateGameCost(duration, member.tier);
+		
+		        const amount = calculateGameCost(
+		            duration,
+		            member.tier
+		        );
+		
+		        const tierLabel =
+		            member.tier === 'beheshti'
+		                ? 'کارت بهشتی'
+		                : member.tier === 'gold'
+		                    ? 'کارت طلایی'
+		                    : member.tier === 'silver'
+		                        ? 'کارت نقره‌ای'
+		                        : 'عضو عادی';
+		
+		        const genderIcon =
+		            member.gender === 'male'
+		                ? '👨'
+		                : member.gender === 'female'
+		                    ? '👩'
+		                    : '👤';
 		
 		        return `
-		            <div class="selected-game-member"
-		                 data-member-id="${member.id}"
-		                 style="
-		                    border:1px solid #ddd;
-		                    border-radius:12px;
-		                    padding:12px;
-		                    margin-bottom:10px;
-		                    background:#fff;
-		                 ">
+		            <div
+		                class="selected-game-member"
+		                data-member-id="${member.id}"
 		
+		                style="
+		                    border:1px solid #e5e5e5;
+		                    border-radius:14px;
+		
+		                    padding:15px;
+		                    margin-bottom:12px;
+		
+		                    background:#fff;
+		
+		                    box-shadow:
+		                        0 2px 8px rgba(0,0,0,.04);
+		                "
+		            >
+		
+		                <!-- سربرگ عضو -->
 		                <div style="
 		                    display:flex;
-		                    justify-content:space-between;
 		                    align-items:center;
-		                    margin-bottom:10px;
+		                    gap:10px;
+		
+		                    margin-bottom:15px;
 		                ">
-		                    <strong>${member.name}</strong>
+		
+		                    <div style="
+		                        width:42px;
+		                        height:42px;
+		
+		                        border-radius:11px;
+		
+		                        display:flex;
+		                        align-items:center;
+		                        justify-content:center;
+		
+		                        background:#f5edf8;
+		
+		                        font-size:21px;
+		                        flex-shrink:0;
+		                    ">
+		                        ${genderIcon}
+		                    </div>
+		
+		                    <div style="
+		                        flex:1;
+		                        min-width:0;
+		                    ">
+		
+		                        <div style="
+		                            font-size:14px;
+		                            font-weight:700;
+		                            color:#333;
+		                            margin-bottom:4px;
+		                        ">
+		                            ${member.name}
+		                        </div>
+		
+		                        <span style="
+		                            display:inline-block;
+		
+		                            font-size:10px;
+		                            color:#8e44ad;
+		
+		                            background:#f8f0fa;
+		
+		                            padding:3px 8px;
+		                            border-radius:20px;
+		                        ">
+		                            ${tierLabel}
+		                        </span>
+		
+		                    </div>
 		
 		                    <button
 		                        type="button"
-		                        onclick="toggleGameSessionMember('${member.id}')"
+		
+		                        onclick="
+		                            toggleGameSessionMember('${member.id}')
+		                        "
+		
 		                        style="
-		                            border:none;
-		                            background:#fee;
-		                            color:#c00;
+		                            border:1px solid #f1caca;
+		
+		                            background:#fff5f5;
+		                            color:#d64545;
+		
+		                            padding:7px 10px;
+		
 		                            border-radius:8px;
-		                            padding:5px 9px;
+		
 		                            cursor:pointer;
+		
+		                            font-family:inherit;
+		                            font-size:11px;
+		                            font-weight:600;
 		                        "
 		                    >
-		                        حذف
+		                        ✕ حذف
 		                    </button>
+		
 		                </div>
 		
+		
+		                <!-- اطلاعات مالی -->
 		                <div style="
 		                    display:grid;
-		                    grid-template-columns:repeat(2, 1fr);
+		
+		                    grid-template-columns:
+		                        repeat(2, minmax(0, 1fr));
+		
 		                    gap:10px;
 		                ">
 		
+		                    <!-- مبلغ -->
 		                    <div>
-		                        <label>مبلغ</label>
-		                        <div style="
-		                            background:#f5f5f5;
-		                            padding:9px;
-		                            border-radius:8px;
-		                            margin-top:4px;
+		
+		                        <label style="
+		                            display:block;
+		
+		                            font-size:11px;
+		                            color:#777;
+		
+		                            margin-bottom:5px;
 		                        ">
-		                            ${amount.toLocaleString('fa-IR')} تومان
+		                            مبلغ سهم
+		                        </label>
+		
+		                        <div style="
+		                            background:#f7f7f7;
+		
+		                            border:1px solid #eee;
+		
+		                            padding:10px;
+		
+		                            border-radius:9px;
+		
+		                            font-size:13px;
+		                            font-weight:700;
+		
+		                            color:#333;
+		                        ">
+		                            ${amount.toLocaleString('fa-IR')}
+		                            <span style="
+		                                font-size:10px;
+		                                font-weight:400;
+		                                color:#888;
+		                            ">
+		                                تومان
+		                            </span>
 		                        </div>
 		
 		                        <input
 		                            type="hidden"
+		
 		                            class="session-player-amount"
+		
 		                            data-member-id="${member.id}"
+		
 		                            value="${amount}"
 		                        >
+		
 		                    </div>
 		
+		
+		                    <!-- وضعیت پرداخت -->
 		                    <div>
-		                        <label>وضعیت پرداخت</label>
+		
+		                        <label style="
+		                            display:block;
+		
+		                            font-size:11px;
+		                            color:#777;
+		
+		                            margin-bottom:5px;
+		                        ">
+		                            وضعیت پرداخت
+		                        </label>
 		
 		                        <select
-		                            class="session-player-payment-status"
+		                            class="
+		                                session-player-payment-status
+		                            "
+		
 		                            data-member-id="${member.id}"
-		                            onchange="updateSessionPlayerPaymentUI('${member.id}')"
+		
+		                            onchange="
+		                                updateSessionPlayerPaymentUI(
+		                                    '${member.id}'
+		                                )
+		                            "
+		
 		                            style="
 		                                width:100%;
-		                                padding:9px;
-		                                margin-top:4px;
+		                                box-sizing:border-box;
+		
+		                                padding:10px;
+		
 		                                border:1px solid #ddd;
-		                                border-radius:8px;
+		
+		                                border-radius:9px;
+		
+		                                background:#fff;
+		
+		                                font-family:inherit;
+		                                font-size:12px;
+		
+		                                cursor:pointer;
 		                            "
 		                        >
-		                            <option value="paid">پرداخت شده</option>
-		                            <option value="debt">بدهکار</option>
+		
+		                            <option value="paid">
+		                                ✓ پرداخت شده
+		                            </option>
+		
+		                            <option value="debt">
+		                                ⚠ بدهکار
+		                            </option>
+		
 		                        </select>
+		
 		                    </div>
 		
 		                </div>
 		
+		
+		                <!-- روش پرداخت -->
 		                <div
-		                    id="payment-method-wrapper-${member.id}"
-		                    style="margin-top:10px;"
+		                    id="
+		                        payment-method-wrapper-${member.id}
+		                    "
+		
+		                    style="
+		                        margin-top:12px;
+		                    "
 		                >
-		                    <label>روش پرداخت</label>
+		
+		                    <label style="
+		                        display:block;
+		
+		                        font-size:11px;
+		                        color:#777;
+		
+		                        margin-bottom:5px;
+		                    ">
+		                        روش پرداخت
+		                    </label>
 		
 		                    <select
-		                        class="session-player-payment-method"
+		                        class="
+		                            session-player-payment-method
+		                        "
+		
 		                        data-member-id="${member.id}"
+		
 		                        style="
 		                            width:100%;
-		                            padding:9px;
-		                            margin-top:4px;
+		                            box-sizing:border-box;
+		
+		                            padding:10px;
+		
 		                            border:1px solid #ddd;
-		                            border-radius:8px;
+		
+		                            border-radius:9px;
+		
+		                            background:#fff;
+		
+		                            font-family:inherit;
+		                            font-size:12px;
+		
+		                            cursor:pointer;
 		                        "
 		                    >
-		                        <option value="cash">نقدی</option>
-		                        <option value="card">کارتخوان</option>
-		                        <option value="transfer">کارت به کارت</option>
+		
+		                        <option value="cash">
+		                            💵 نقدی
+		                        </option>
+		
+		                        <option value="card">
+		                            💳 کارتخوان
+		                        </option>
+		
+		                        <option value="transfer">
+		                            📱 کارت به کارت
+		                        </option>
+		
 		                    </select>
+		
 		                </div>
 		
 		            </div>
 		        `;
+		
 		    }).join('');
 		}
 		
