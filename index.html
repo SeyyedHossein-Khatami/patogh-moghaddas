@@ -1937,40 +1937,149 @@
 		    alert("سابقه با موفقیت حذف شد.");
 		}
         async function clearMemberHistory() {
-		    if (!confirm("آیا از حذف کل تاریخچه حضور این شخص اطمینان دارید؟")) {
+
+		    if (!currentActiveMemberId) {
+		        alert('عضو فعالی انتخاب نشده است.');
 		        return;
 		    }
 		
 		    const member = members.find(
-		        m => m.id === currentActiveMemberId
+		        m => String(m.id) === String(currentActiveMemberId)
 		    );
 		
 		    if (!member) {
-		        return alert("عضو پیدا نشد.");
+		        alert('عضو پیدا نشد.');
+		        return;
 		    }
 		
-		    const { data, error } = await supabaseClient
-		        .from('visits')
-		        .delete()
-		        .eq('member_id', member.id)
-		        .select();
+		    const sessions = member.gameSessions || [];
 		
-		    if (error) {
-		        console.error("خطا در حذف تاریخچه عضو:", error);
+		    if (sessions.length === 0) {
+		        alert('این عضو هیچ سابقه بازی ندارد.');
+		        return;
+		    }
 		
-		        return alert(
-		            "حذف تاریخچه از دیتابیس انجام نشد."
+		    const confirmed = confirm(
+		        `آیا مطمئن هستید تمام تاریخچه بازی‌های «${member.name}» حذف شود؟\n\n` +
+		        `تعداد جلسات: ${sessions.length}\n\n` +
+		        `این کار فقط سابقه این عضو را حذف می‌کند و سابقه سایر بازیکنان جلسات باقی خواهد ماند.`
+		    );
+		
+		    if (!confirmed) return;
+		
+		    try {
+		
+		        // ---------------------------------------
+		        // شناسه رکوردهای game_session_players
+		        // ---------------------------------------
+		        const playerIds = sessions
+		            .map(session => session.playerId)
+		            .filter(Boolean);
+		
+		        if (playerIds.length === 0) {
+		            alert('رکوردهای بازی این عضو پیدا نشد.');
+		            return;
+		        }
+		
+		
+		        // ---------------------------------------
+		        // حذف رکوردهای این عضو از جلسات
+		        // ---------------------------------------
+		        const { error: deletePlayersError } =
+		            await supabaseClient
+		                .from('game_session_players')
+		                .delete()
+		                .in('id', playerIds);
+		
+		        if (deletePlayersError) {
+		            console.error(deletePlayersError);
+		
+		            throw new Error(
+		                'حذف تاریخچه بازی‌های عضو انجام نشد.'
+		            );
+		        }
+		
+		
+		        // ---------------------------------------
+		        // پیدا کردن جلساتی که بعد از حذف،
+		        // هیچ بازیکنی ندارند
+		        // ---------------------------------------
+		        const sessionIds = [
+		            ...new Set(
+		                sessions
+		                    .map(session => session.sessionId)
+		                    .filter(Boolean)
+		            )
+		        ];
+		
+		
+		        for (const sessionId of sessionIds) {
+		
+		            const { data: remainingPlayers, error } =
+		                await supabaseClient
+		                    .from('game_session_players')
+		                    .select('id')
+		                    .eq('game_session_id', sessionId)
+		                    .limit(1);
+		
+		            if (error) {
+		                console.error(
+		                    'خطا در بررسی بازیکنان جلسه:',
+		                    error
+		                );
+		
+		                continue;
+		            }
+		
+		
+		            // اگر جلسه دیگر هیچ بازیکنی ندارد،
+		            // خود جلسه هم حذف شود
+		            if (!remainingPlayers || remainingPlayers.length === 0) {
+		
+		                const { error: deleteSessionError } =
+		                    await supabaseClient
+		                        .from('game_sessions')
+		                        .delete()
+		                        .eq('id', sessionId);
+		
+		                if (deleteSessionError) {
+		                    console.error(
+		                        'خطا در حذف جلسه بدون بازیکن:',
+		                        deleteSessionError
+		                    );
+		                }
+		            }
+		        }
+		
+		
+		        // ---------------------------------------
+		        // بارگذاری مجدد اطلاعات
+		        // ---------------------------------------
+		        await loadGameSessions();
+		
+		        renderList();
+		
+		
+		        // ---------------------------------------
+		        // به‌روزرسانی پرونده عضو
+		        // ---------------------------------------
+		        renderMemberPersonalInfo();
+		        renderGameSessionHistory();
+		
+		
+		        alert(
+		            `✅ تاریخچه بازی‌های «${member.name}» با موفقیت حذف شد.`
+		        );
+		
+		    } catch (error) {
+		
+		        console.error(error);
+		
+		        alert(
+		            error.message ||
+		            'خطایی هنگام حذف تاریخچه بازی رخ داد.'
 		        );
 		    }
-		
-		    console.log("جلسات حذف‌شده:", data);
-		
-		    member.visits = [];
-		
-		    renderVisitsAndStats();
-		    filterMembers();
-		
-		    alert("کل تاریخچه حضور این عضو با موفقیت پاک شد.");
 		}
         
         async function clearAllSystemHistory() {
