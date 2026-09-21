@@ -2615,18 +2615,46 @@
 		        // -----------------------------
 		        // 1. ثبت خود جلسه
 		        // -----------------------------
-		        const { data: session, error: sessionError } =
-		            await supabaseClient
-		                .from('game_sessions')
-		                .insert([{
-		                    game_catalog_id: gameCatalogId,
-		                    start_time: startTime,
-		                    end_time: endTime,
-		                    duration: durationMinutes,
-		                    status: 'completed'
-		                }])
-		                .select()
-		                .single();
+		        const today = new Date();
+
+				const sessionStartDate = new Date(
+				    today.getFullYear(),
+				    today.getMonth(),
+				    today.getDate(),
+				    Number(startTime.split(':')[0]),
+				    Number(startTime.split(':')[1]),
+				    0
+				);
+				
+				const sessionEndDate = new Date(
+				    today.getFullYear(),
+				    today.getMonth(),
+				    today.getDate(),
+				    Number(endTime.split(':')[0]),
+				    Number(endTime.split(':')[1]),
+				    0
+				);
+				
+				// اگر ساعت پایان از شروع کمتر یا مساوی باشد
+				// یعنی جلسه از نیمه‌شب عبور کرده
+				if (sessionEndDate <= sessionStartDate) {
+				    sessionEndDate.setDate(
+				        sessionEndDate.getDate() + 1
+				    );
+				}
+				
+				const { data: session, error: sessionError } =
+				    await supabaseClient
+				        .from('game_sessions')
+				        .insert([{
+				            game_catalog_id: gameCatalogId,
+				            start_time: sessionStartDate.toISOString(),
+				            end_time: sessionEndDate.toISOString(),
+				            duration: durationMinutes,
+				            status: 'completed'
+				        }])
+				        .select()
+				        .single();
 		
 		        if (sessionError) {
 		            console.error(sessionError);
